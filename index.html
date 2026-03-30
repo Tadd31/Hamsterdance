@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <!--
   Thank you for looking at the code.
-  This was mainly made with Claude on a mobile during the weekend.
+  This was made with Claude on a mobile during the weekend.
+  Don't forget to click on the star
 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>The Phantom Dance</title>
-<meta name="description" content="The Phantom Dance — an interactive tribute to Phantom Studios">
+<meta name="description" content="The Phantom Dance — a tribute to Phantom Studios">
 <meta name="theme-color" content="#0a0a0a">
 <meta name="robots" content="index, follow">
 
@@ -16,15 +17,13 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="The Phantom Dance">
 <meta property="og:description" content="An interactive tribute to Phantom Studios.">
-<meta property="og:image" content="https://www.phantom.land/favicon.ico">
+<meta property="og:image" content="https://phantom.land/favicon.ico">
 <meta property="og:site_name" content="The Phantom Dance">
 
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="The Phantom Dance">
-<meta name="twitter:description" content="An interactive tribute to Phantom Studios.">
 
-<!-- Fonts -->
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="https://phantom.land/favicon.ico">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@800&display=swap" rel="stylesheet">
 <style>
@@ -42,6 +41,7 @@
     font-family: 'Space Mono', monospace;
     min-height: 100vh;
     overflow-x: hidden;
+
   }
 
 
@@ -60,11 +60,12 @@
   header h1 {
     font-family: 'Syne', sans-serif;
     font-weight: 800;
-    font-size: clamp(1.6rem, 6vw, 4rem);
+    font-size: clamp(0.8rem, 3.8vw, 3.8rem);
     letter-spacing: -0.03em;
     text-transform: uppercase;
     line-height: 1;
     pointer-events: none;
+    white-space: nowrap;
   }
 
   header h1 em {
@@ -80,8 +81,8 @@
   header h1 em:hover { opacity: 0.5; }
 
   @keyframes star-glow {
-    from { text-shadow: 0 0 4px rgba(242,242,238,0.1), 0 0 8px rgba(242,242,238,0.05); opacity: 0.18; }
-    to   { text-shadow: 0 0 12px rgba(242,242,238,0.5), 0 0 24px rgba(242,242,238,0.2); opacity: 0.35; }
+    from { text-shadow: 0 0 4px rgba(242,242,238,0.1), 0 0 8px rgba(242,242,238,0.05); opacity: 0.10; }
+    to   { text-shadow: 0 0 12px rgba(242,242,238,0.5), 0 0 24px rgba(242,242,238,0.2); opacity: 0.69; }
   }
 
   /* push dance stage down so it starts below fixed header */
@@ -403,9 +404,7 @@
   @media (min-width: 768px) {
     :root { --ghost-size: 72px; }
 
-    header h1 {
-      font-size: clamp(2.5rem, 5vw, 5rem);
-    }
+
 
     .speed-bar {
       left: 50%;
@@ -436,7 +435,6 @@
 </div>
 
 <!-- MAIN EXPERIENCE -->
-<!-- You should click onthe star-->
 <div id="main">
 <header>
   <h1>The Phantom <em>★</em> Dance</h1>
@@ -458,8 +456,9 @@
   <button class="speed-btn" data-speed="1.75">●●●●●</button>
 </div>
 
-<footer>Christophe+Claude<span id="reg">®</span></footer>
+<footer>phantom.land <span id="reg">®</span></footer>
 </div>
+
 
 <!-- Ghost counter -->
 <div id="ghost-count">
@@ -684,7 +683,6 @@ const MIDI_DUR=54.25;
   }
 
   introEl.addEventListener('click', launchExperience);
-
 
   // ── GHOST COUNTER ──
   // countEl looked up lazily so it's always safe to call updateCount
