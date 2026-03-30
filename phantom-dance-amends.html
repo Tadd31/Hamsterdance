@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<!--
+  Thank you for looking at the code.
+  This was mainly made with Claude on a mobile during the weekend.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>The Phantom Dance</title>
+<meta name="description" content="The Phantom Dance — an interactive tribute to Phantom Studios">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="The Phantom Dance">
+<meta property="og:description" content="An interactive tribute to Phantom Studios.">
+<meta property="og:image" content="https://www.phantom.land/favicon.ico">
+<meta property="og:site_name" content="The Phantom Dance">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The Phantom Dance">
+<meta name="twitter:description" content="An interactive tribute to Phantom Studios.">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #f2f2ee;
+    --ghost-size: 54px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    text-align: center;
+    padding: 1.2rem 1rem 1rem;
+    background: linear-gradient(to bottom, rgba(10,10,10,1) 70%, rgba(10,10,10,0));
+    pointer-events: none;
+  }
+
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.6rem, 6vw, 4rem);
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  header h1 em {
+    font-style: normal;
+    opacity: 0.2;
+    cursor: pointer;
+    pointer-events: all;
+    display: inline-block;
+    animation: star-glow 2.5s ease-in-out infinite alternate;
+    transition: opacity 0.3s;
+  }
+
+  header h1 em:hover { opacity: 0.5; }
+
+  @keyframes star-glow {
+    from { text-shadow: 0 0 4px rgba(242,242,238,0.1), 0 0 8px rgba(242,242,238,0.05); opacity: 0.18; }
+    to   { text-shadow: 0 0 12px rgba(242,242,238,0.5), 0 0 24px rgba(242,242,238,0.2); opacity: 0.35; }
+  }
+
+  /* push dance stage down so it starts below fixed header */
+  .dance-stage {
+    padding-top: 5rem;
+  }
+
+
+  /* DANCE FLOOR — ghosts wrap naturally to fill screen width */
+  .dance-stage {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    padding: 5rem 0 5rem;
+    width: 100%;
+  }
+
+  .ghost-img {
+    width: var(--ghost-size);
+    height: var(--ghost-size);
+    object-fit: contain;
+    filter: invert(1);
+    transform-origin: bottom center;
+    display: block;
+    cursor: default;
+    flex-shrink: 0;
+    flex-grow: 0;
+  }
+
+
+
+  .ghost-img {
+    object-fit: contain;
+    filter: invert(1);
+    transform-origin: bottom center;
+    display: block;
+    cursor: default;
+  }
+
+
+
+
+  /* b1 — clean bounce, grounded on X axis */
+  @keyframes b1 {
+    from { transform: translateY(0)     scaleX(1)    scaleY(1)    rotate(-3deg); }
+    to   { transform: translateY(-16px) scaleX(0.93) scaleY(1.08) rotate(3deg);  }
+  }
+  /* turn — flips direction mid bounce, grounded */
+  @keyframes turn {
+    0%   { transform: translateY(0)     scaleX(1)     scaleY(1)    rotate(-3deg); }
+    45%  { transform: translateY(-16px) scaleX(0.93)  scaleY(1.08) rotate(3deg);  }
+    50%  { transform: translateY(-14px) scaleX(0)     scaleY(1.08) rotate(0deg);  }
+    55%  { transform: translateY(-16px) scaleX(-0.93) scaleY(1.08) rotate(-3deg); }
+    100% { transform: translateY(0)     scaleX(-1)    scaleY(1)    rotate(3deg);  }
+  }
+  /* stretch — film-strip squish and stretch */
+  @keyframes stretch {
+    0%   { transform: scaleX(1)    scaleY(1);    }
+    25%  { transform: scaleX(1.15) scaleY(0.75); }
+    50%  { transform: scaleX(0.85) scaleY(1.3);  }
+    75%  { transform: scaleX(1.05) scaleY(0.9);  }
+    100% { transform: scaleX(1)    scaleY(1);    }
+  }
+
+  /* shrink — pulse in and out like a heartbeat */
+  @keyframes shrink {
+    0%   { transform: scale(1);    }
+    40%  { transform: scale(0.55); }
+    60%  { transform: scale(0.55); }
+    100% { transform: scale(1);    }
+  }
+
+  /* wave — sways left and right */
+  @keyframes wave {
+    0%   { transform: translateX(0)    rotate(0deg);   }
+    25%  { transform: translateX(-8px) rotate(-8deg);  }
+    75%  { transform: translateX(8px)  rotate(8deg);   }
+    100% { transform: translateX(0)    rotate(0deg);   }
+  }
+
+  /* wobble — pendulum rotation */
+  @keyframes wobble {
+    0%   { transform: rotate(0deg);   }
+    20%  { transform: rotate(-18deg); }
+    60%  { transform: rotate(18deg);  }
+    100% { transform: rotate(0deg);   }
+  }
+
+  /* float — gentle hover up and down */
+  @keyframes float {
+    from { transform: translateY(0);    }
+    to   { transform: translateY(-12px);}
+  }
+
+  /* squash — hits ground and pops back */
+  @keyframes squash {
+    0%   { transform: translateY(0)     scaleX(1)    scaleY(1);    }
+    60%  { transform: translateY(0)     scaleX(1.4)  scaleY(0.5);  }
+    75%  { transform: translateY(-18px) scaleX(0.88) scaleY(1.15); }
+    90%  { transform: translateY(0)     scaleX(1.1)  scaleY(0.9);  }
+    100% { transform: translateY(0)     scaleX(1)    scaleY(1);    }
+  }
+
+  @keyframes shake {
+    0%   { transform: translateX(0);    }
+    15%  { transform: translateX(-6px); }
+    30%  { transform: translateX(6px);  }
+    45%  { transform: translateX(-5px); }
+    60%  { transform: translateX(5px);  }
+    75%  { transform: translateX(-3px); }
+    90%  { transform: translateX(3px);  }
+    100% { transform: translateX(0);    }
+  }
+
+  @keyframes nod {
+    0%   { transform: translateY(0)    scaleX(1)    scaleY(1);    }
+    30%  { transform: translateY(6px)  scaleX(1.08) scaleY(0.88); }
+    60%  { transform: translateY(-8px) scaleX(0.94) scaleY(1.1);  }
+    80%  { transform: translateY(3px)  scaleX(1.04) scaleY(0.96); }
+    100% { transform: translateY(0)    scaleX(1)    scaleY(1);    }
+  }
+
+  @keyframes heartbeat {
+    0%   { transform: scale(1);    }
+    14%  { transform: scale(1.25); }
+    28%  { transform: scale(1);    }
+    42%  { transform: scale(1.2);  }
+    56%  { transform: scale(1);    }
+    100% { transform: scale(1);    }
+  }
+
+  @keyframes melt {
+    0%   { transform: scaleX(1)   scaleY(1)    translateY(0);    }
+    40%  { transform: scaleX(1.6) scaleY(0.35) translateY(12px); }
+    55%  { transform: scaleX(1.6) scaleY(0.35) translateY(12px); }
+    80%  { transform: scaleX(0.9) scaleY(1.15) translateY(-6px); }
+    100% { transform: scaleX(1)   scaleY(1)    translateY(0);    }
+  }
+
+  .music-bar {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 100;
+  }
+
+  #music-btn {
+    background: var(--white);
+    color: var(--black);
+    border: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.55rem 1rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  #music-btn:hover { opacity: 0.75; }
+
+  /* Speed control bar */
+  .speed-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    padding: 0.6rem 0;
+    background: rgba(10,10,10,0.92);
+    border-top: 1px solid rgba(242,242,238,0.08);
+  }
+
+  .speed-btn {
+    flex: 1;
+    max-width: 80px;
+    padding: 0.5rem 0;
+    background: none;
+    border: none;
+    color: var(--white);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.35;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    text-align: center;
+  }
+  .speed-btn:hover  { opacity: 0.7; }
+  .speed-btn.active { opacity: 1; border-bottom: 2px solid var(--white); }
+
+  #reg {
+    cursor: pointer;
+    display: inline-block;
+  }
+
+  .boo-pop {
+    position: fixed;
+    left: 50%;
+    bottom: 4rem;
+    transform: translateX(-50%);
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--white);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .boo-pop.show { opacity: 1; }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem 1rem 3rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    opacity: 0.18;
+  }
+
+  /* Ghost counter */
+  #ghost-count {
+    position: fixed;
+    bottom: 4rem;
+    left: 1.2rem;
+    z-index: 100;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.5rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--white);
+    opacity: 0.25;
+    pointer-events: none;
+    line-height: 1.4;
+  }
+
+  /* ── INTRO SCREEN ── */
+  #intro {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: var(--black);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.8s ease;
+  }
+
+  #intro.fade-out {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Ghost: correct proportions — PNG is portrait so use auto height */
+  #intro-ghost {
+    width: 160px;
+    height: auto;
+    filter: invert(1);
+    transform-origin: center center;
+    display: block;
+    /* wobble via animation, zoom via JS adding keyframe class */
+    animation: intro-wobble 3s ease-in-out infinite;
+  }
+
+  /* Zoom is handled by a separate keyframe so it overrides wobble cleanly */
+  #intro-ghost.zoom {
+    animation: intro-zoom 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  @keyframes intro-wobble {
+    0%   { transform: rotate(-2deg) scale(1);    }
+    25%  { transform: rotate(2deg)  scale(1.02); }
+    50%  { transform: rotate(-1deg) scale(0.99); }
+    75%  { transform: rotate(2deg)  scale(1.01); }
+    100% { transform: rotate(-2deg) scale(1);    }
+  }
+
+  @keyframes intro-zoom {
+    0%   { transform: scale(1);   opacity: 1; }
+    60%  { transform: scale(30);  opacity: 1; }
+    100% { transform: scale(40);  opacity: 0; }
+  }
+
+  /* hint text */
+  #intro-hint {
+    position: absolute;
+    bottom: 12%;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--white);
+    opacity: 0;
+    pointer-events: none;
+    animation: hint-fade 1.2s ease 6s forwards;
+  }
+
+  @keyframes hint-fade {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 0.3; transform: translateY(0); }
+  }
+
+  /* main hidden until intro done */
+  #main {
+    opacity: 0;
+    transition: opacity 0.8s ease;
+  }
+  #main.visible { opacity: 1; }
+
+  /* ── DESKTOP LAYOUT ── */
+  @media (min-width: 768px) {
+    :root { --ghost-size: 72px; }
+
+    header h1 {
+      font-size: clamp(2.5rem, 5vw, 5rem);
+    }
+
+    .speed-bar {
+      left: 50%;
+      transform: translateX(-50%);
+      width: auto;
+      gap: 0.5rem;
+      padding: 0.8rem 2rem;
+      border-radius: 2rem;
+      bottom: 1.5rem;
+    }
+
+    .speed-btn {
+      max-width: 60px;
+    }
+
+    #intro-ghost {
+      width: 220px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- INTRO SCREEN -->
+<div id="intro">
+  <img id="intro-ghost" src="data:image/png;base64,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" alt=""/>
+  <p id="intro-hint">tap to enter</p>
+</div>
+
+<!-- MAIN EXPERIENCE -->
+<!-- You should click onthe star-->
+<div id="main">
+<header>
+  <h1>The Phantom <em>★</em> Dance</h1>
+</header>
+
+<div class="dance-stage" id="stage"></div>
+
+<div class="boo-pop" id="boo">boo 👻</div>
+
+<div class="music-bar">
+  <button id="music-btn">♪ Play</button>
+</div>
+
+<div class="speed-bar">
+  <button class="speed-btn" data-speed="0.25">●</button>
+  <button class="speed-btn" data-speed="0.625">●● </button>
+  <button class="speed-btn active" data-speed="1">●●●</button>
+  <button class="speed-btn" data-speed="1.375">●●●●</button>
+  <button class="speed-btn" data-speed="1.75">●●●●●</button>
+</div>
+
+<footer>Christophe+Claude<span id="reg">®</span></footer>
+</div>
+
+<!-- Ghost counter -->
+<div id="ghost-count">
+  <div>👻 <span id="count-num">0</span></div>
+  <div>ghosts summoned</div>
+</div>
+
+<script>
+  const GHOST = "data:image/png;base64,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";
+
+  const SPEED       = 0.48;
+  const STRETCH_DUR = 1.2;
+  const TURN_DUR    = 1.6;
+
+  // Colour palette: filter values that change fill but keep outline
+  // invert(1) turns black→white, then sepia+hue-rotate tints the fill
+  const colours = [
+    'invert(1)',                                                           // white
+    'invert(1) sepia(1) saturate(4) hue-rotate(200deg)',                  // blue
+    'invert(1) sepia(1) saturate(4) hue-rotate(90deg)',                   // green
+    'invert(1) sepia(1) saturate(6) hue-rotate(300deg)',                  // purple
+    'invert(1) sepia(1) saturate(8) hue-rotate(0deg)',                    // red
+    'invert(1) sepia(1) saturate(6) hue-rotate(160deg)',                  // teal
+    'invert(1) sepia(1) saturate(5) hue-rotate(240deg)',                  // indigo
+    'invert(1) sepia(1) saturate(8) hue-rotate(40deg)',                   // orange
+    'invert(1) sepia(1) saturate(6) hue-rotate(320deg)',                  // pink
+    'invert(1) sepia(1) saturate(5) hue-rotate(180deg)',                  // cyan
+    'invert(1) sepia(1) saturate(7) hue-rotate(60deg)',                   // yellow-green
+    'invert(1) sepia(1) saturate(6) hue-rotate(270deg)',                  // violet
+    'invert(1) sepia(1) saturate(9) hue-rotate(15deg)',                   // amber
+    'invert(1) sepia(1) saturate(5) hue-rotate(140deg)',                  // lime
+    'invert(1)',                                                           // white again
+    'invert(1) sepia(1) saturate(4) hue-rotate(220deg)',                  // sky blue
+    'invert(1) sepia(1) saturate(7) hue-rotate(330deg)',                  // hot pink
+    'invert(1) sepia(1) saturate(6) hue-rotate(75deg)',                   // chartreuse
+    'invert(1) sepia(1) saturate(8) hue-rotate(190deg)',                  // electric blue
+    'invert(1) sepia(1) saturate(7) hue-rotate(355deg)',                  // crimson
+  ];
+
+  const stage = document.getElementById('stage');
+  let rowIdx     = 0;
+  let chaosMode  = false; // must be before addGhostBlock
+  let speedMult  = 1.0;   // must be before addGhostBlock
+  let ghostTotal = 0;     // must be before addGhostBlock
+
+  // 6 animation personalities cycling
+  const animTypes = ['bounce', 'stretch', 'turn', 'shrink', 'wave', 'wobble', 'float', 'squash', 'shake', 'nod', 'heartbeat', 'melt'];
+
+  function addGhostBlock() {
+    const count        = Math.floor(Math.random() * 5) + 10; // 10-14 per block
+    const rowAnimType  = animTypes[rowIdx % animTypes.length];
+    const rowColour    = colours[rowIdx % colours.length];
+
+    for (let i = 0; i < count; i++) {
+      const img = document.createElement('img');
+      img.src = GHOST;
+      img.className = 'ghost-img';
+      img.alt = '';
+
+      // Respect chaos mode: each ghost random, otherwise follow row sequence
+      const animType = chaosMode
+        ? animTypes[Math.floor(Math.random() * animTypes.length)]
+        : rowAnimType;
+      const colour = chaosMode
+        ? colours[Math.floor(Math.random() * colours.length)]
+        : rowColour;
+
+      img.style.filter = colour;
+
+      const dur = { bounce:0.48, stretch:1.2, turn:1.6, shrink:0.9, wave:1.0, wobble:0.8, float:1.4, squash:1.1, shake:0.5, nod:0.9, heartbeat:0.8, melt:1.4 }[animType];
+      const frameOffset = chaosMode
+        ? -(Math.random() * dur)     // random phase in chaos mode
+        : -(i * (dur / count));      // film-strip frames in row mode
+
+      const sp = speedMult;
+      const sdur = dur / sp;
+      const soff = frameOffset / sp;
+      switch(animType) {
+        case 'bounce':
+          img.style.animation = `b1 ${sdur}s ease-in-out ${soff}s infinite alternate`;
+          break;
+        case 'stretch':
+          img.style.animation = `stretch ${sdur}s ease-in-out ${soff}s infinite`;
+          break;
+        case 'turn':
+          img.style.animation = `turn ${sdur}s ease-in-out ${soff}s infinite`;
+          break;
+        case 'shrink':
+          img.style.animation = `shrink ${sdur}s ease-in-out ${soff}s infinite`;
+          break;
+        case 'wave':
+          img.style.animation = `wave ${sdur}s ease-in-out ${soff}s infinite`;
+          break;
+        case 'wobble':
+          img.style.animation = `wobble ${sdur}s ease-in-out ${soff}s infinite`;
+          break;
+        case 'float':
+          img.style.animation = `float ${sdur}s ease-in-out ${soff}s infinite alternate`;
+          break;
+        case 'squash':
+          img.style.animation = `squash ${sdur}s ease-in-out ${soff}s infinite`;
+          break;
+        case 'shake':
+          img.style.animation = `shake ${sdur}s ease-in-out ${soff}s infinite`;
+          break;
+        case 'nod':
+          img.style.animation = `nod ${sdur}s ease-in-out ${soff}s infinite`;
+          break;
+        case 'heartbeat':
+          img.style.animation = `heartbeat ${sdur}s ease-in-out ${soff}s infinite`;
+          break;
+        case 'melt':
+          img.style.animation = `melt ${sdur}s ease-in-out ${soff}s infinite`;
+          break;
+      }
+
+      // Store base animation durations for speed control
+      img.dataset.baseDur = img.style.animationDuration;
+
+      stage.appendChild(img);
+    }
+    if (typeof updateCount === 'function') updateCount(count);
+    rowIdx++;
+  }
+
+  // Initial fill
+  for (let r = 0; r < 30; r++) addGhostBlock();
+
+  // Infinite scroll — poll every 300ms, add more when near bottom
+  setInterval(function() {
+    const fromBottom = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
+    if (fromBottom < 800) {
+      for (let r = 0; r < 20; r++) addGhostBlock();
+    }
+  }, 300);
+
+  // ── MUSIC — real MIDI hamster dance ──
+  const MIDI_NOTES=[[2.0,830.61,0.0625],[2.125,783.99,0.125],[2.25,246.94,0.25],[2.25,830.61,0.25],[2.5,659.26,0.1875],[2.5,415.3,0.25],[2.5,329.63,0.25],[2.75,246.94,0.25],[2.75,659.26,0.25],[3.0,415.3,0.25],[3.0,329.63,0.25],[3.125,659.26,0.0625],[3.25,493.88,0.1875],[3.25,246.94,0.25],[3.5,493.88,0.125],[3.5,415.3,0.25],[3.5,329.63,0.25],[3.75,246.94,0.25],[4.0,830.61,0.125],[4.0,415.3,0.25],[4.0,329.63,0.25],[4.25,246.94,0.25],[4.5,493.88,0.125],[4.5,415.3,0.25],[4.5,329.63,0.25],[4.75,659.26,0.125],[4.75,246.94,0.25],[4.875,830.61,0.125],[5.0,415.3,0.25],[5.0,329.63,0.25],[5.125,987.77,0.375],[5.25,246.94,0.25],[5.5,440.0,0.25],[5.5,369.99,0.25],[5.75,246.94,0.25],[6.0,440.0,0.25],[6.0,369.99,0.25],[6.25,246.94,0.25],[6.5,1318.51,0.125],[6.5,415.3,0.25],[6.5,329.63,0.25],[6.625,1108.73,0.125],[6.75,987.77,0.125],[6.75,246.94,0.25],[6.875,1108.73,0.125],[7.0,987.77,0.125],[7.0,329.63,0.25],[7.0,415.3,0.25],[7.125,830.61,0.125],[7.25,987.77,0.125],[7.25,277.18,0.25],[7.375,659.26,0.125],[7.5,659.26,0.125],[7.5,440.0,0.25],[7.5,329.63,0.25],[7.625,659.26,0.125],[7.75,554.37,0.125],[7.75,277.18,0.25],[7.875,659.26,0.125],[8.0,739.99,0.125],[8.0,440.0,0.25],[8.0,329.63,0.25],[8.125,659.26,0.125],[8.25,830.61,0.125],[8.25,246.94,0.25],[8.375,987.77,0.125],[8.5,830.61,0.125],[8.5,329.63,0.25],[8.5,415.3,0.25],[8.625,987.77,0.125],[8.75,554.37,0.125],[8.75,246.94,0.25],[8.875,493.88,0.125],[9.0,554.37,0.25],[9.0,440.0,0.25],[9.0,311.13,0.25],[9.25,82.41,0.125],[9.25,659.26,1.75],[9.25,415.3,1.75],[9.25,329.63,1.75],[9.75,123.47,0.125],[9.75,82.41,0.125],[10.25,123.47,0.125],[10.25,82.41,0.125],[10.75,123.47,0.125],[10.75,82.41,0.125],[11.25,164.81,0.125],[11.25,82.41,0.125],[11.625,164.81,0.125],[11.625,82.41,0.125],[12.0,61.74,0.125],[12.0,123.47,0.125],[12.25,41.2,0.125],[12.25,82.41,0.125],[13.0,415.3,0.0625],[13.125,392.0,0.125],[13.25,41.2,0.125],[13.25,415.3,0.25],[13.5,123.47,0.125],[13.5,164.81,0.125],[13.5,329.63,0.1875],[13.625,82.41,0.125],[13.75,41.2,0.125],[13.75,329.63,0.25],[14.0,123.47,0.125],[14.0,164.81,0.125],[14.125,329.63,0.0625],[14.25,41.2,0.125],[14.25,246.94,0.1875],[14.5,123.47,0.125],[14.5,164.81,0.125],[14.5,246.94,0.125],[14.625,82.41,0.125],[14.75,41.2,0.125],[15.0,123.47,0.125],[15.0,164.81,0.125],[15.0,415.3,0.125],[15.25,41.2,0.125],[15.5,123.47,0.125],[15.5,164.81,0.125],[15.5,246.94,0.125],[15.625,82.41,0.125],[15.75,41.2,0.125],[15.75,329.63,0.125],[15.875,415.3,0.125],[16.0,123.47,0.125],[16.0,164.81,0.125],[16.125,493.88,0.375],[16.25,61.74,0.125],[16.5,246.94,0.125],[16.5,185.0,0.125],[16.625,123.47,0.125],[16.75,61.74,0.125],[17.0,246.94,0.125],[17.0,185.0,0.125],[17.25,69.3,0.125],[17.5,277.18,0.125],[17.5,207.65,0.125],[17.5,659.26,0.125],[17.625,138.59,0.125],[17.625,554.37,0.125],[17.75,69.3,0.125],[17.75,493.88,0.125],[17.875,554.37,0.125],[18.0,277.18,0.125],[18.0,207.65,0.125],[18.0,493.88,0.125],[18.125,415.3,0.125],[18.25,55.0,0.125],[18.25,493.88,0.125],[18.375,329.63,0.125],[18.5,220.0,0.125],[18.5,164.81,0.125],[18.5,329.63,0.125],[18.625,110.0,0.125],[18.625,329.63,0.125],[18.75,55.0,0.125],[18.75,277.18,0.125],[18.875,329.63,0.125],[19.0,164.81,0.125],[19.0,220.0,0.125],[19.0,369.99,0.125],[19.125,329.63,0.125],[19.25,61.74,0.125],[19.25,415.3,0.125],[19.375,493.88,0.125],[19.5,185.0,0.125],[19.5,246.94,0.125],[19.5,415.3,0.125],[19.625,123.47,0.125],[19.625,493.88,0.125],[19.75,61.74,0.125],[19.75,277.18,0.125],[19.875,246.94,0.125],[20.0,185.0,0.125],[20.0,246.94,0.125],[20.0,277.18,0.25],[20.25,41.2,0.375],[20.25,329.63,1.75],[20.5,164.81,0.125],[20.5,123.47,0.125],[20.625,82.41,0.125],[20.75,82.41,0.375],[20.75,41.2,0.375],[21.0,164.81,0.125],[21.0,123.47,0.125],[21.25,82.41,0.375],[21.25,41.2,0.375],[21.5,164.81,0.125],[21.5,123.47,0.125],[21.625,82.41,0.125],[21.75,41.2,0.375],[21.75,82.41,0.5],[22.0,164.81,0.125],[22.0,123.47,0.125],[22.25,82.41,0.125],[22.25,41.2,0.125],[22.25,415.3,0.25],[22.625,41.2,0.125],[22.625,82.41,0.125],[22.75,329.63,0.25],[23.0,41.2,0.125],[23.0,82.41,0.125],[23.25,82.41,0.125],[23.25,41.2,0.125],[23.25,246.94,0.25],[23.625,41.2,0.125],[23.625,82.41,0.125],[24.0,82.41,0.125],[24.0,41.2,0.125],[24.0,246.94,0.125],[24.125,246.94,0.125],[24.25,41.2,0.125],[24.25,82.41,0.125],[24.25,329.63,0.125],[24.5,246.94,0.125],[24.625,41.2,0.125],[24.625,82.41,0.125],[24.75,329.63,0.125],[25.0,82.41,0.125],[25.0,41.2,0.125],[25.0,415.3,0.125],[25.25,123.47,0.125],[25.25,61.74,0.125],[25.25,369.99,0.125],[25.625,123.47,0.125],[25.625,61.74,0.125],[25.625,369.99,0.125],[26.0,123.47,0.125],[26.0,61.74,0.125],[26.0,329.63,0.125],[26.125,369.99,0.125],[26.25,138.59,0.125],[26.25,69.3,0.125],[26.25,415.3,0.125],[26.5,329.63,0.125],[26.625,138.59,0.125],[26.625,69.3,0.125],[26.75,415.3,0.125],[27.0,138.59,0.125],[27.0,69.3,0.125],[27.0,493.88,0.125],[27.25,110.0,0.125],[27.25,55.0,0.125],[27.25,440.0,0.125],[27.625,110.0,0.125],[27.625,55.0,0.125],[27.625,440.0,0.125],[28.0,110.0,0.125],[28.0,55.0,0.125],[28.0,415.3,0.125],[28.125,369.99,0.125],[28.25,123.47,0.125],[28.25,61.74,0.125],[28.25,415.3,0.125],[28.375,415.3,0.125],[28.5,415.3,0.125],[28.625,123.47,0.125],[28.625,61.74,0.125],[28.75,369.99,0.125],[28.875,369.99,0.125],[29.0,123.47,0.125],[29.0,61.74,0.125],[29.0,369.99,0.125],[29.25,82.41,0.125],[29.25,41.2,0.125],[29.25,329.63,0.125],[29.5,41.2,0.125],[29.5,82.41,0.125],[29.625,329.63,0.125],[29.75,82.41,0.125],[29.75,41.2,0.125],[30.0,329.63,0.125],[30.0,41.2,0.125],[30.0,82.41,0.125],[30.125,369.99,0.125],[30.25,415.3,0.125],[30.25,82.41,0.125],[30.25,41.2,0.125],[30.5,415.3,0.125],[30.625,41.2,0.125],[30.625,82.41,0.125],[30.75,164.81,0.125],[30.75,123.47,0.125],[30.75,329.63,0.125],[31.0,41.2,0.125],[31.0,82.41,0.125],[31.0,329.63,0.125],[31.25,82.41,0.125],[31.25,41.2,0.125],[31.25,246.94,0.25],[31.625,41.2,0.125],[31.625,82.41,0.125],[31.625,246.94,0.125],[31.75,164.81,0.125],[31.75,123.47,0.125],[32.0,246.94,0.125],[32.0,82.41,0.125],[32.0,41.2,0.125],[32.125,246.94,0.125],[32.25,329.63,0.125],[32.25,41.2,0.125],[32.25,82.41,0.125],[32.5,246.94,0.125],[32.625,41.2,0.125],[32.625,82.41,0.125],[32.75,164.81,0.125],[32.75,123.47,0.125],[32.75,329.63,0.125],[33.0,415.3,0.125],[33.0,82.41,0.125],[33.0,41.2,0.125],[33.25,369.99,0.125],[33.25,123.47,0.125],[33.25,61.74,0.125],[33.625,369.99,0.125],[33.625,123.47,0.125],[33.625,61.74,0.125],[33.75,246.94,0.125],[33.75,185.0,0.125],[34.0,329.63,0.125],[34.0,123.47,0.125],[34.0,61.74,0.125],[34.125,369.99,0.125],[34.25,415.3,0.125],[34.25,138.59,0.125],[34.25,69.3,0.125],[34.375,415.3,0.125],[34.5,329.63,0.125],[34.625,138.59,0.125],[34.625,69.3,0.125],[34.75,277.18,0.125],[34.75,207.65,0.125],[34.75,415.3,0.125],[35.0,493.88,0.125],[35.0,138.59,0.125],[35.0,69.3,0.125],[35.25,440.0,0.125],[35.25,110.0,0.125],[35.25,55.0,0.125],[35.625,440.0,0.125],[35.625,110.0,0.125],[35.625,55.0,0.125],[35.75,164.81,0.125],[35.75,220.0,0.125],[36.0,415.3,0.125],[36.0,110.0,0.125],[36.0,55.0,0.125],[36.125,369.99,0.125],[36.25,415.3,0.125],[36.25,123.47,0.125],[36.25,61.74,0.125],[36.375,415.3,0.125],[36.5,415.3,0.125],[36.625,123.47,0.125],[36.625,61.74,0.125],[36.75,185.0,0.125],[36.75,246.94,0.125],[36.75,369.99,0.125],[36.875,369.99,0.125],[37.0,369.99,0.125],[37.0,123.47,0.125],[37.0,61.74,0.125],[37.25,82.41,0.125],[37.25,41.2,0.125],[37.25,329.63,0.5],[37.5,164.81,0.125],[37.5,123.47,0.125],[37.5,41.2,0.125],[37.5,82.41,0.125],[37.75,82.41,0.125],[37.75,41.2,0.125],[38.0,164.81,0.125],[38.0,123.47,0.125],[38.0,82.41,0.125],[38.0,41.2,0.125],[38.25,82.41,0.125],[38.25,41.2,0.125],[38.25,830.61,0.25],[38.25,987.77,0.25],[38.25,415.3,0.25],[38.25,493.88,0.25],[38.5,123.47,0.0625],[38.5,82.41,0.0625],[38.625,82.41,0.125],[38.625,41.2,0.125],[38.75,164.81,0.125],[38.75,123.47,0.125],[38.75,830.61,0.25],[38.75,659.26,0.25],[38.75,415.3,0.25],[38.75,329.63,0.25],[39.0,123.47,0.0625],[39.0,82.41,0.125],[39.0,41.2,0.125],[39.25,41.2,0.125],[39.25,82.41,0.125],[39.25,659.26,0.25],[39.25,493.88,0.25],[39.25,329.63,0.25],[39.25,246.94,0.25],[39.5,123.47,0.0625],[39.5,82.41,0.0625],[39.625,82.41,0.125],[39.625,41.2,0.125],[39.75,164.81,0.125],[39.75,123.47,0.125],[40.0,123.47,0.0625],[40.0,82.41,0.125],[40.0,41.2,0.125],[40.0,659.26,0.125],[40.0,493.88,0.125],[40.0,329.63,0.125],[40.0,246.94,0.125],[40.125,493.88,0.125],[40.125,659.26,0.125],[40.125,246.94,0.125],[40.125,329.63,0.125],[40.25,82.41,0.125],[40.25,41.2,0.125],[40.25,830.61,0.125],[40.25,659.26,0.125],[40.25,415.3,0.125],[40.25,329.63,0.125],[40.5,123.47,0.0625],[40.5,82.41,0.0625],[40.5,659.26,0.125],[40.5,493.88,0.125],[40.5,329.63,0.125],[40.5,246.94,0.125],[40.625,82.41,0.125],[40.625,41.2,0.125],[40.75,164.81,0.125],[40.75,123.47,0.125],[40.75,659.26,0.125],[40.75,830.61,0.125],[40.75,329.63,0.125],[40.75,415.3,0.125],[41.0,123.47,0.0625],[41.0,82.41,0.125],[41.0,41.2,0.125],[41.0,830.61,0.125],[41.0,987.77,0.125],[41.0,415.3,0.125],[41.0,493.88,0.125],[41.25,123.47,0.125],[41.25,61.74,0.125],[41.25,987.77,0.25],[41.25,739.99,0.25],[41.25,493.88,0.25],[41.25,369.99,0.25],[41.5,185.0,0.0625],[41.5,123.47,0.0625],[41.625,123.47,0.125],[41.625,61.74,0.125],[41.625,739.99,0.125],[41.625,987.77,0.125],[41.625,369.99,0.125],[41.625,493.88,0.125],[41.75,246.94,0.125],[41.75,185.0,0.125],[42.0,185.0,0.0625],[42.0,123.47,0.125],[42.0,61.74,0.125],[42.0,830.61,0.125],[42.0,659.26,0.125],[42.0,415.3,0.125],[42.0,329.63,0.125],[42.125,880.0,0.125],[42.125,739.99,0.125],[42.125,440.0,0.125],[42.125,369.99,0.125],[42.25,138.59,0.125],[42.25,69.3,0.125],[42.25,987.77,0.125],[42.25,830.61,0.125],[42.25,493.88,0.125],[42.25,415.3,0.125],[42.5,207.65,0.0625],[42.5,138.59,0.0625],[42.5,830.61,0.125],[42.5,659.26,0.125],[42.5,415.3,0.125],[42.5,329.63,0.125],[42.625,138.59,0.125],[42.625,69.3,0.125],[42.75,207.65,0.125],[42.75,277.18,0.125],[42.75,987.77,0.125],[42.75,830.61,0.125],[42.75,493.88,0.125],[42.75,415.3,0.125],[43.0,207.65,0.0625],[43.0,138.59,0.125],[43.0,69.3,0.125],[43.0,659.26,0.125],[43.0,1318.51,0.125],[43.0,987.77,0.125],[43.0,493.88,0.125],[43.25,110.0,0.125],[43.25,55.0,0.125],[43.25,554.37,0.25],[43.25,1108.73,0.25],[43.25,880.0,0.25],[43.25,440.0,0.25],[43.5,164.81,0.0625],[43.5,110.0,0.0625],[43.625,110.0,0.125],[43.625,55.0,0.125],[43.625,554.37,0.125],[43.625,1108.73,0.125],[43.625,880.0,0.125],[43.625,440.0,0.125],[43.75,164.81,0.125],[43.75,220.0,0.125],[44.0,164.81,0.0625],[44.0,110.0,0.125],[44.0,55.0,0.125],[44.0,830.61,0.125],[44.0,987.77,0.125],[44.0,415.3,0.125],[44.0,493.88,0.125],[44.125,739.99,0.125],[44.125,880.0,0.125],[44.125,369.99,0.125],[44.125,440.0,0.125],[44.25,123.47,0.125],[44.25,61.74,0.125],[44.25,830.61,0.125],[44.25,987.77,0.125],[44.25,415.3,0.125],[44.25,493.88,0.125],[44.375,830.61,0.125],[44.375,987.77,0.125],[44.375,415.3,0.125],[44.375,493.88,0.125],[44.5,185.0,0.0625],[44.5,123.47,0.0625],[44.5,830.61,0.125],[44.5,987.77,0.125],[44.5,415.3,0.125],[44.5,493.88,0.125],[44.625,123.47,0.125],[44.625,61.74,0.125],[44.75,185.0,0.125],[44.75,246.94,0.125],[44.75,880.0,0.125],[44.75,739.99,0.125],[44.75,440.0,0.125],[44.75,369.99,0.125],[44.875,880.0,0.125],[44.875,739.99,0.125],[44.875,440.0,0.125],[44.875,369.99,0.125],[45.0,185.0,0.0625],[45.0,123.47,0.125],[45.0,61.74,0.125],[45.0,880.0,0.125],[45.0,739.99,0.125],[45.0,440.0,0.125],[45.0,369.99,0.125],[45.25,82.41,0.125],[45.25,41.2,0.125],[45.25,830.61,0.25],[45.25,659.26,0.25],[45.25,415.3,0.25],[45.25,329.63,0.25],[45.5,164.81,0.125],[45.5,123.47,0.125],[45.5,41.2,0.125],[45.5,82.41,0.125],[45.625,659.26,0.125],[45.625,830.61,0.125],[45.625,329.63,0.125],[45.625,415.3,0.125],[45.75,82.41,0.125],[45.75,41.2,0.125],[46.0,164.81,0.125],[46.0,123.47,0.125],[46.0,82.41,0.125],[46.0,41.2,0.125],[46.0,830.61,0.125],[46.0,659.26,0.125],[46.0,415.3,0.125],[46.0,329.63,0.125],[46.125,880.0,0.125],[46.125,739.99,0.125],[46.125,440.0,0.125],[46.125,369.99,0.125],[46.25,41.2,0.125],[46.25,82.41,0.125],[46.25,987.77,0.125],[46.25,830.61,0.125],[46.25,493.88,0.125],[46.25,415.3,0.125],[46.5,123.47,0.0625],[46.5,82.41,0.0625],[46.5,987.77,0.125],[46.5,830.61,0.125],[46.5,493.88,0.125],[46.5,415.3,0.125],[46.625,82.41,0.125],[46.625,41.2,0.125],[46.75,123.47,0.125],[46.75,164.81,0.125],[46.75,659.26,0.125],[46.75,830.61,0.125],[46.75,329.63,0.125],[46.75,415.3,0.125],[47.0,123.47,0.0625],[47.0,82.41,0.125],[47.0,41.2,0.125],[47.0,659.26,0.125],[47.0,830.61,0.125],[47.0,329.63,0.125],[47.0,415.3,0.125],[47.25,82.41,0.125],[47.25,41.2,0.125],[47.25,987.77,0.25],[47.25,493.88,0.25],[47.25,659.26,0.25],[47.25,246.94,0.25],[47.25,329.63,0.25],[47.5,123.47,0.0625],[47.5,82.41,0.0625],[47.625,82.41,0.125],[47.625,41.2,0.125],[47.625,987.77,0.125],[47.625,659.26,0.125],[47.625,493.88,0.125],[47.625,329.63,0.125],[47.625,246.94,0.125],[47.75,123.47,0.125],[47.75,164.81,0.125],[48.0,123.47,0.0625],[48.0,82.41,0.125],[48.0,41.2,0.125],[48.0,987.77,0.125],[48.0,659.26,0.125],[48.0,493.88,0.125],[48.0,329.63,0.125],[48.0,246.94,0.125],[48.125,987.77,0.125],[48.125,659.26,0.125],[48.125,493.88,0.125],[48.125,329.63,0.125],[48.125,246.94,0.125],[48.25,82.41,0.125],[48.25,41.2,0.125],[48.25,830.61,0.125],[48.25,659.26,0.125],[48.25,415.3,0.125],[48.25,329.63,0.125],[48.375,659.26,0.125],[48.375,830.61,0.125],[48.375,329.63,0.125],[48.375,415.3,0.125],[48.5,123.47,0.0625],[48.5,82.41,0.0625],[48.5,987.77,0.125],[48.5,659.26,0.125],[48.5,493.88,0.125],[48.5,329.63,0.125],[48.5,246.94,0.125],[48.625,82.41,0.125],[48.625,41.2,0.125],[48.75,123.47,0.125],[48.75,164.81,0.125],[48.75,830.61,0.125],[48.75,659.26,0.125],[48.75,415.3,0.125],[48.75,329.63,0.125],[49.0,123.47,0.0625],[49.0,82.41,0.125],[49.0,41.2,0.125],[49.0,830.61,0.125],[49.0,987.77,0.125],[49.0,415.3,0.125],[49.0,493.88,0.125],[49.25,123.47,0.125],[49.25,61.74,0.125],[49.25,739.99,0.25],[49.25,987.77,0.25],[49.25,369.99,0.25],[49.25,493.88,0.25],[49.5,164.81,0.0625],[49.5,123.47,0.0625],[49.625,123.47,0.125],[49.625,61.74,0.125],[49.625,739.99,0.125],[49.625,987.77,0.125],[49.625,369.99,0.125],[49.625,493.88,0.125],[49.75,164.81,0.125],[49.75,246.94,0.125],[50.0,164.81,0.0625],[50.0,123.47,0.125],[50.0,61.74,0.125],[50.0,659.26,0.125],[50.0,830.61,0.125],[50.0,329.63,0.125],[50.0,415.3,0.125],[50.125,739.99,0.125],[50.125,880.0,0.125],[50.125,369.99,0.125],[50.125,440.0,0.125],[50.25,138.59,0.125],[50.25,69.3,0.125],[50.25,830.61,0.125],[50.25,987.77,0.125],[50.25,415.3,0.125],[50.25,493.88,0.125],[50.375,830.61,0.125],[50.375,987.77,0.125],[50.375,415.3,0.125],[50.375,493.88,0.125],[50.5,207.65,0.0625],[50.5,138.59,0.0625],[50.5,659.26,0.125],[50.5,830.61,0.125],[50.5,329.63,0.125],[50.5,415.3,0.125],[50.625,138.59,0.125],[50.625,69.3,0.125],[50.75,207.65,0.125],[50.75,277.18,0.125],[50.75,830.61,0.125],[50.75,987.77,0.125],[50.75,415.3,0.125],[50.75,493.88,0.125],[51.0,207.65,0.0625],[51.0,138.59,0.125],[51.0,69.3,0.125],[51.0,659.26,0.125],[51.0,987.77,0.125],[51.0,493.88,0.125],[51.25,110.0,0.125],[51.25,55.0,0.125],[51.25,554.37,0.25],[51.25,880.0,0.25],[51.25,1108.73,0.25],[51.25,440.0,0.25],[51.5,164.81,0.0625],[51.5,110.0,0.0625],[51.625,110.0,0.125],[51.625,55.0,0.125],[51.625,554.37,0.125],[51.625,880.0,0.125],[51.625,1108.73,0.125],[51.625,440.0,0.125],[51.75,164.81,0.125],[51.75,220.0,0.125],[52.0,164.81,0.0625],[52.0,110.0,0.125],[52.0,55.0,0.125],[52.0,830.61,0.125],[52.0,987.77,0.125],[52.0,415.3,0.125],[52.0,493.88,0.125],[52.125,739.99,0.125],[52.125,880.0,0.125],[52.125,369.99,0.125],[52.125,440.0,0.125],[52.25,123.47,0.125],[52.25,61.74,0.125],[52.25,830.61,0.125],[52.25,987.77,0.125],[52.25,415.3,0.125],[52.25,493.88,0.125],[52.375,830.61,0.125],[52.375,987.77,0.125],[52.375,415.3,0.125],[52.375,493.88,0.125],[52.5,185.0,0.0625],[52.5,123.47,0.0625],[52.5,830.61,0.125],[52.5,987.77,0.125],[52.5,415.3,0.125],[52.5,493.88,0.125],[52.625,123.47,0.125],[52.625,61.74,0.125],[52.75,185.0,0.125],[52.75,246.94,0.125],[52.75,739.99,0.125],[52.75,880.0,0.125],[52.75,369.99,0.125],[52.75,440.0,0.125],[52.875,739.99,0.125],[52.875,880.0,0.125],[52.875,369.99,0.125],[52.875,440.0,0.125],[53.0,185.0,0.0625],[53.0,123.47,0.125],[53.0,61.74,0.125],[53.0,739.99,0.125],[53.0,880.0,0.125],[53.0,369.99,0.125],[53.0,440.0,0.125],[53.25,82.41,0.125],[53.25,41.2,0.125],[53.25,659.26,0.125],[53.25,830.61,0.125],[53.25,329.63,0.125],[53.25,415.3,0.125],[53.625,1318.51,0.1875],[53.625,830.61,0.3125],[53.625,329.63,0.3125],[53.625,164.81,0.375],[53.625,659.26,0.375],[53.625,123.47,0.4375],[53.625,415.3,0.4375],[53.625,82.41,0.5],[53.625,41.2,0.625]];
+const MIDI_DUR=54.25;
+
+  let playing     = false;
+  let audioCtx    = null;
+  let sourceNodes = [];
+  let loopTimeout = null;
+
+  function scheduleNotes() {
+    if (!playing || !audioCtx) return;
+    const sp = speedMult;
+    const now = audioCtx.currentTime;
+
+    sourceNodes.forEach(n => { try { n.stop(); } catch(e) {} });
+    sourceNodes = [];
+
+    MIDI_NOTES.forEach(([t, freq, dur]) => {
+      const st = t / sp;
+      const sd = Math.max(dur / sp, 0.03);
+      const osc  = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now + st);
+      gain.gain.linearRampToValueAtTime(0.06, now + st + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + st + sd);
+      osc.start(now + st);
+      osc.stop(now + st + sd + 0.05);
+      sourceNodes.push(osc);
+    });
+
+    // Loop after full duration
+    loopTimeout = setTimeout(scheduleNotes, (MIDI_DUR / sp) * 1000);
+  }
+
+  function startMusic() {
+    if (playing) return;
+    playing = true;
+    document.getElementById('music-btn').textContent = '■ Stop';
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    scheduleNotes();
+  }
+
+  function stopMusic() {
+    playing = false;
+    document.getElementById('music-btn').textContent = '♪ Play';
+    clearTimeout(loopTimeout);
+    if (audioCtx) { audioCtx.close(); audioCtx = null; }
+  }
+
+  document.getElementById('music-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (playing) stopMusic(); else startMusic();
+  });
+
+  // ── EASTER EGG: ® ──
+  const boo = document.getElementById('boo');
+  let booTimer;
+  document.getElementById('reg').addEventListener('click', () => {
+    clearTimeout(booTimer);
+    boo.classList.add('show');
+    booTimer = setTimeout(() => boo.classList.remove('show'), 1800);
+  });
+
+  // ── INTRO ──
+  const introEl      = document.getElementById('intro');
+  const introGhostEl = document.getElementById('intro-ghost');
+  const mainEl       = document.getElementById('main');
+
+  function launchExperience() {
+    // Trigger zoom
+    introGhostEl.classList.add('zoom');
+    // After zoom fills screen fade intro, show main, start music
+    setTimeout(() => {
+      introEl.classList.add('fade-out');
+      mainEl.classList.add('visible');
+      startMusic();
+    }, 600);
+    // Remove intro from DOM
+    setTimeout(() => {
+      introEl.style.display = 'none';
+    }, 1500);
+  }
+
+  introEl.addEventListener('click', launchExperience);
+
+
+  // ── GHOST COUNTER ──
+  // countEl looked up lazily so it's always safe to call updateCount
+  // regardless of script execution order
+  function updateCount(n) {
+    ghostTotal += n;
+    const el = document.getElementById('count-num');
+    if (el) el.textContent = ghostTotal.toLocaleString();
+  }
+
+  // ── EASTER EGG: ★ — chaos mode toggle ──
+  const star = document.querySelector('header h1 em');
+
+  function randomiseGhosts() {
+    const ghosts = document.querySelectorAll('.ghost-img');
+    const sp = speedMult;
+    ghosts.forEach(img => {
+      const animType = animTypes[Math.floor(Math.random() * animTypes.length)];
+      const colour   = colours[Math.floor(Math.random() * colours.length)];
+      const dur      = { bounce:0.48, stretch:1.2, turn:1.6, shrink:0.9, wave:1.0,
+                         wobble:0.8, float:1.4, squash:1.1, shake:0.5, nod:0.9,
+                         heartbeat:0.8, melt:1.4 }[animType];
+      const sdur     = dur / sp;
+      const soff     = -(Math.random() * sdur); // random phase offset
+      img.style.filter = colour;
+      switch(animType) {
+        case 'bounce':    img.style.animation = `b1 ${sdur}s ease-in-out ${soff}s infinite alternate`; break;
+        case 'stretch':   img.style.animation = `stretch ${sdur}s ease-in-out ${soff}s infinite`; break;
+        case 'turn':      img.style.animation = `turn ${sdur}s ease-in-out ${soff}s infinite`; break;
+        case 'shrink':    img.style.animation = `shrink ${sdur}s ease-in-out ${soff}s infinite`; break;
+        case 'wave':      img.style.animation = `wave ${sdur}s ease-in-out ${soff}s infinite`; break;
+        case 'wobble':    img.style.animation = `wobble ${sdur}s ease-in-out ${soff}s infinite`; break;
+        case 'float':     img.style.animation = `float ${sdur}s ease-in-out ${soff}s infinite alternate`; break;
+        case 'squash':    img.style.animation = `squash ${sdur}s ease-in-out ${soff}s infinite`; break;
+        case 'shake':     img.style.animation = `shake ${sdur}s ease-in-out ${soff}s infinite`; break;
+        case 'nod':       img.style.animation = `nod ${sdur}s ease-in-out ${soff}s infinite`; break;
+        case 'heartbeat': img.style.animation = `heartbeat ${sdur}s ease-in-out ${soff}s infinite`; break;
+        case 'melt':      img.style.animation = `melt ${sdur}s ease-in-out ${soff}s infinite`; break;
+      }
+    });
+  }
+
+  function restoreRows() {
+    while (stage.firstChild) stage.removeChild(stage.firstChild);
+    rowIdx = 0;
+    for (let r = 0; r < 30; r++) addGhostBlock();
+    if (speedMult !== 1.0) applySpeed(speedMult);
+  }
+
+  star.addEventListener('click', (e) => {
+    e.stopPropagation();
+    chaosMode = !chaosMode;
+    if (chaosMode) {
+      star.style.animation = 'star-glow 0.4s ease-in-out infinite alternate';
+      randomiseGhosts();
+    } else {
+      star.style.animation = 'star-glow 2.5s ease-in-out infinite alternate';
+      restoreRows();
+    }
+  });
+
+  // ── SPEED CONTROL ──
+  // Store base durations on each ghost as data attributes
+  // Speed always applied from base, never compounded
+  function applySpeed(mult) {
+    speedMult = mult;
+    document.querySelectorAll('.ghost-img').forEach(img => {
+      // Store original durations on first apply
+      if (!img.dataset.baseDurations) {
+        img.dataset.baseDurations = img.style.animationDuration;
+      }
+      const bases = img.dataset.baseDur.split(',');
+      img.style.animationDuration = bases.map(d => {
+        const val = parseFloat(d);
+        return isNaN(val) ? d : (val / mult) + 's';
+      }).join(',');
+    });
+    // Restart music at new speed
+    if (playing) { stopMusic(); startMusic(); }
+  }
+
+  document.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applySpeed(parseFloat(btn.dataset.speed));
+    });
+  });
+</script>
+</body>
+</html>
