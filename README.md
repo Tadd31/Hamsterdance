@@ -1,0 +1,1 @@
+Hey, glad you’re looking. A bit of Claude on my mobile this weekend… Did you try the star? I hope to optimise this further to make sure the performance is still good once we’ve generated thousands of ghosts.
