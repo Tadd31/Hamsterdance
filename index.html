@@ -3,7 +3,6 @@
   Thank you for looking at the code.
   This was made with Claude on a mobile during the weekend.
   Don't forget to click on the star
-  Version 1.1
 -->
 <html lang="en">
 <head>
@@ -87,8 +86,14 @@
   }
 
   /* push dance stage down so it starts below fixed header */
+  /* DANCE FLOOR */
   .dance-stage {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    width: 100%;
     padding-top: 5rem;
+    padding-bottom: 5rem;
   }
 
 
@@ -401,6 +406,54 @@
   }
   #main.visible { opacity: 1; }
 
+  /* ── DISCO BALL ── */
+  #disco-wrap {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(-110%);
+    transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  #disco-wrap.dropped {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  #disco-svg {
+    width: 140px;
+    height: auto;
+    display: block;
+  }
+
+  /* Coloured floor light spots */
+  .disco-spot {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: screen;
+    z-index: 10;
+    filter: blur(6px);
+    transition: opacity 0.4s ease;
+  }
+
+  body.disco-active .disco-spot {
+    animation: spot-dance 2s ease-in-out infinite;
+  }
+
+  @keyframes spot-dance {
+    0%   { opacity: 0;   transform: scale(0.5) translate(0px, 0px);   }
+    25%  { opacity: 0.6; transform: scale(1.2) translate(10px, -5px); }
+    50%  { opacity: 0.8; transform: scale(0.9) translate(-8px, 8px);  }
+    75%  { opacity: 0.5; transform: scale(1.1) translate(6px, -3px);  }
+    100% { opacity: 0;   transform: scale(0.5) translate(0px, 0px);   }
+  }
+
   /* ── DESKTOP LAYOUT ── */
   @media (min-width: 768px) {
     :root { --ghost-size: 72px; }
@@ -444,6 +497,58 @@
 <div class="dance-stage" id="stage"></div>
 
 <div class="boo-pop" id="boo">boo 👻</div>
+
+<!-- DISCO BALL — SVG matching the flat-icon style of the ghost PNG -->
+<div id="disco-wrap">
+  <svg id="disco-svg" viewBox="0 0 260 300" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <clipPath id="sphere-clip">
+        <circle cx="130" cy="185" r="108"/>
+      </clipPath>
+      <radialGradient id="tile-grad" cx="38%" cy="32%" r="65%">
+        <stop offset="0%"   stop-color="#ffffff"/>
+        <stop offset="35%"  stop-color="#dce0ea"/>
+        <stop offset="100%" stop-color="#b8bcc8"/>
+      </radialGradient>
+    </defs>
+
+    <!-- Hanging wire -->
+    <line x1="130" y1="0" x2="130" y2="56" stroke="#333" stroke-width="3.5" stroke-linecap="round"/>
+
+    <!-- Mount cap -->
+    <rect x="116" y="52" width="28" height="18" rx="7" ry="7" fill="#888c96" stroke="#333" stroke-width="5" stroke-linejoin="round"/>
+
+    <!-- Ball base fill -->
+    <circle cx="130" cy="185" r="108" fill="url(#tile-grad)" stroke="#333" stroke-width="9"/>
+
+    <!-- Grid clipped to sphere -->
+    <g clip-path="url(#sphere-clip)">
+      <!-- Horizontal lines -->
+      <line x1="22"  y1="131" x2="238" y2="131" stroke="#333" stroke-width="7"/>
+      <line x1="22"  y1="159" x2="238" y2="159" stroke="#333" stroke-width="7"/>
+      <line x1="22"  y1="187" x2="238" y2="187" stroke="#333" stroke-width="7"/>
+      <line x1="22"  y1="215" x2="238" y2="215" stroke="#333" stroke-width="7"/>
+      <line x1="22"  y1="243" x2="238" y2="243" stroke="#333" stroke-width="7"/>
+      <!-- Vertical lines -->
+      <line x1="76"  y1="77"  x2="76"  y2="293" stroke="#333" stroke-width="7"/>
+      <line x1="103" y1="77"  x2="103" y2="293" stroke="#333" stroke-width="7"/>
+      <line x1="130" y1="77"  x2="130" y2="293" stroke="#333" stroke-width="7"/>
+      <line x1="157" y1="77"  x2="157" y2="293" stroke="#333" stroke-width="7"/>
+      <line x1="184" y1="77"  x2="184" y2="293" stroke="#333" stroke-width="7"/>
+      <!-- White highlight tiles upper-left -->
+      <rect x="103" y="102" width="27" height="29" fill="white" opacity="0.9"/>
+      <rect x="130" y="102" width="27" height="29" fill="white" opacity="0.7"/>
+      <rect x="76"  y="131" width="27" height="28" fill="white" opacity="0.55"/>
+      <rect x="103" y="131" width="27" height="28" fill="white" opacity="0.85"/>
+    </g>
+
+    <!-- Outer stroke redraw on top -->
+    <circle cx="130" cy="185" r="108" fill="none" stroke="#333" stroke-width="9"/>
+  </svg>
+</div>
+
+<!-- Floor light spots -->
+<div class="disco-spots" id="disco-spots"></div>
 
 <div class="music-bar">
   <button id="music-btn">♪ Play</button>
@@ -500,101 +605,180 @@
   ];
 
   const stage = document.getElementById('stage');
+
+  // ── State vars — all declared before any function that uses them ──
   let rowIdx     = 0;
-  let chaosMode  = false; // must be before addGhostBlock
-  let speedMult  = 1.0;   // must be before addGhostBlock
-  let ghostTotal = 0;     // must be before addGhostBlock
+  let chaosMode  = false;
+  let speedMult  = 1.0;
+  let ghostTotal = 0;
 
-  // 6 animation personalities cycling
-  const animTypes = ['bounce', 'stretch', 'turn', 'shrink', 'wave', 'wobble', 'float', 'squash', 'shake', 'nod', 'heartbeat', 'melt'];
+  const animTypes = ['bounce','stretch','turn','shrink','wave','wobble','float','squash','shake','nod','heartbeat','melt'];
+  const DURS = {bounce:0.48,stretch:1.2,turn:1.6,shrink:0.9,wave:1.0,wobble:0.8,float:1.4,squash:1.1,shake:0.5,nod:0.9,heartbeat:0.8,melt:1.4};
+  const GHOST_PX = 54; // matches --ghost-size
 
-  function addGhostBlock() {
-    const count        = Math.floor(Math.random() * 5) + 10; // 10-14 per block
-    const rowAnimType  = animTypes[rowIdx % animTypes.length];
-    const rowColour    = colours[rowIdx % colours.length];
-
-    for (let i = 0; i < count; i++) {
-      const img = document.createElement('img');
-      img.src = GHOST;
-      img.className = 'ghost-img';
-      img.alt = '';
-
-      // Respect chaos mode: each ghost random, otherwise follow row sequence
-      const animType = chaosMode
-        ? animTypes[Math.floor(Math.random() * animTypes.length)]
-        : rowAnimType;
-      const colour = chaosMode
-        ? colours[Math.floor(Math.random() * colours.length)]
-        : rowColour;
-
-      img.style.filter = colour;
-
-      const dur = { bounce:0.48, stretch:1.2, turn:1.6, shrink:0.9, wave:1.0, wobble:0.8, float:1.4, squash:1.1, shake:0.5, nod:0.9, heartbeat:0.8, melt:1.4 }[animType];
-      const frameOffset = chaosMode
-        ? -(Math.random() * dur)     // random phase in chaos mode
-        : -(i * (dur / count));      // film-strip frames in row mode
-
-      const sp = speedMult;
-      const sdur = dur / sp;
-      const soff = frameOffset / sp;
-      switch(animType) {
-        case 'bounce':
-          img.style.animation = `b1 ${sdur}s ease-in-out ${soff}s infinite alternate`;
-          break;
-        case 'stretch':
-          img.style.animation = `stretch ${sdur}s ease-in-out ${soff}s infinite`;
-          break;
-        case 'turn':
-          img.style.animation = `turn ${sdur}s ease-in-out ${soff}s infinite`;
-          break;
-        case 'shrink':
-          img.style.animation = `shrink ${sdur}s ease-in-out ${soff}s infinite`;
-          break;
-        case 'wave':
-          img.style.animation = `wave ${sdur}s ease-in-out ${soff}s infinite`;
-          break;
-        case 'wobble':
-          img.style.animation = `wobble ${sdur}s ease-in-out ${soff}s infinite`;
-          break;
-        case 'float':
-          img.style.animation = `float ${sdur}s ease-in-out ${soff}s infinite alternate`;
-          break;
-        case 'squash':
-          img.style.animation = `squash ${sdur}s ease-in-out ${soff}s infinite`;
-          break;
-        case 'shake':
-          img.style.animation = `shake ${sdur}s ease-in-out ${soff}s infinite`;
-          break;
-        case 'nod':
-          img.style.animation = `nod ${sdur}s ease-in-out ${soff}s infinite`;
-          break;
-        case 'heartbeat':
-          img.style.animation = `heartbeat ${sdur}s ease-in-out ${soff}s infinite`;
-          break;
-        case 'melt':
-          img.style.animation = `melt ${sdur}s ease-in-out ${soff}s infinite`;
-          break;
-      }
-
-      // Store base animation durations for speed control
-      img.dataset.baseDur = img.style.animationDuration;
-
-      stage.appendChild(img);
+  function makeAnim(animType, dur, frameOffset) {
+    const s = dur / speedMult, o = frameOffset / speedMult;
+    switch(animType) {
+      case 'bounce':    return `b1 ${s}s ease-in-out ${o}s infinite alternate`;
+      case 'float':     return `float ${s}s ease-in-out ${o}s infinite alternate`;
+      default:          return `${animType} ${s}s ease-in-out ${o}s infinite`;
     }
-    if (typeof updateCount === 'function') updateCount(count);
-    rowIdx++;
   }
 
-  // Initial fill
-  for (let r = 0; r < 30; r++) addGhostBlock();
+  // ── BLOCK DATA STORE ──
+  // blocks[] = source of truth. Grows forever, never shrinks.
+  //
+  // KEY DESIGN (lessons learned):
+  // - Stage stays display:flex;flex-wrap:wrap — ghosts flow naturally, NO row breaks
+  // - Each block owns N ghost <img> elements appended directly to stage
+  // - Each block also owns one zero-height sentinel <div> appended after its ghosts
+  //   This sentinel is a real div so getBoundingClientRect() works reliably
+  // - When a block is offscreen: imgs removed, sentinel gets a height placeholder
+  //   so the page height stays constant → scroll-up works perfectly
+  // - When block comes back into view: imgs re-injected before sentinel, height cleared
+  // - Counter increments once per block in addBlock(), never on re-inject
+  const blocks = [];
+  let dataRowIdx = 0;
 
-  // Infinite scroll — poll every 300ms, add more when near bottom
-  setInterval(function() {
-    const fromBottom = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
-    if (fromBottom < 800) {
-      for (let r = 0; r < 20; r++) addGhostBlock();
+  function buildGhostData(count, rowAnim, rowClr) {
+    const ghosts = [];
+    for (let i = 0; i < count; i++) {
+      const a = chaosMode ? animTypes[Math.floor(Math.random()*animTypes.length)] : rowAnim;
+      const c = chaosMode ? colours[Math.floor(Math.random()*colours.length)]    : rowClr;
+      const d = DURS[a];
+      const f = chaosMode ? -(Math.random()*d) : -(i*(d/count));
+      ghosts.push({animType:a, colour:c, dur:d, frameOffset:f});
     }
-  }, 300);
+    return ghosts;
+  }
+
+  // Estimate collapsed height of a block in pixels
+  function estimateHeight(block) {
+    const perRow = Math.max(Math.floor(stage.offsetWidth / GHOST_PX), 1);
+    return Math.ceil(block.ghosts.length / perRow) * GHOST_PX;
+  }
+
+  // Inject ghost imgs into stage before the block's sentinel
+  function injectImgs(block) {
+    if (block.live) return;
+    // Remove placeholder if present
+    if (block.placeholder.parentNode) block.placeholder.remove();
+    block.ghosts.forEach(({animType, colour, dur, frameOffset}) => {
+      const img = document.createElement('img');
+      img.src         = GHOST;
+      img.className   = 'ghost-img';
+      img.alt         = '';
+      img.style.filter    = colour;
+      img.style.animation = makeAnim(animType, dur, frameOffset);
+      img.dataset.baseDur = img.style.animationDuration;
+      // Insert before sentinel so order is preserved
+      stage.insertBefore(img, block.sentinel);
+    });
+    block.live = true;
+  }
+
+  // Remove ghost imgs — insert a same-height placeholder to preserve scroll height
+  function removeImgs(block) {
+    if (!block.live) return;
+    const h = estimateHeight(block);
+    block.imgs.forEach(img => img.remove());
+    block.imgs = [];
+    // Placeholder holds the space — full width forces its own row
+    block.placeholder.style.cssText = `width:100%;height:${h}px;flex-shrink:0;`;
+    stage.insertBefore(block.placeholder, block.sentinel);
+    block.live = false;
+  }
+
+  // After injecting, collect img refs for future removal
+  function collectImgs(block) {
+    block.imgs = [];
+    let node = block.sentinel.previousSibling;
+    let count = block.ghosts.length;
+    while (node && count > 0) {
+      if (node.classList && node.classList.contains('ghost-img')) {
+        block.imgs.unshift(node);
+        count--;
+      }
+      node = node.previousSibling;
+    }
+  }
+
+  // Create one new block — data + sentinel in DOM + ghost imgs injected
+  function addBlock() {
+    const count    = Math.floor(Math.random() * 5) + 10;
+    const rowAnim  = animTypes[dataRowIdx % animTypes.length];
+    const rowClr   = colours[dataRowIdx % colours.length];
+    const ghosts   = buildGhostData(count, rowAnim, rowClr);
+    dataRowIdx++;
+
+    // Sentinel: truly zero-size so it has zero impact on flex layout
+    // getBoundingClientRect still works on zero-size elements
+    const sentinel = document.createElement('div');
+    sentinel.style.cssText = 'width:0;height:0;padding:0;margin:0;border:0;flex:0 0 0;overflow:hidden;';
+    stage.insertBefore(sentinel, scrollSentinel);
+
+    // Placeholder: only in DOM when block is collapsed
+    const placeholder = document.createElement('div');
+    placeholder.style.cssText = 'display:none;';
+
+    const block = { ghosts, sentinel, placeholder, imgs: [], live: false };
+    blocks.push(block);
+
+    injectImgs(block);
+    collectImgs(block);
+
+    // Counter: once only, here, never on re-inject
+    ghostTotal += count;
+    const el = document.getElementById('count-num');
+    if (el) el.textContent = ghostTotal.toLocaleString();
+  }
+
+  // ── INFINITE SCROLL ──
+  const scrollSentinel = document.createElement('div');
+  scrollSentinel.style.cssText = 'width:0;height:0;padding:0;margin:0;flex:0 0 0;';
+  stage.appendChild(scrollSentinel);
+
+  function addBlocks(n) {
+    for (let i = 0; i < n; i++) addBlock();
+  }
+
+  const ioInfinite = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) addBlocks(15);
+  }, { rootMargin: '600px' });
+  ioInfinite.observe(scrollSentinel);
+
+  // ── VIEWPORT RECYCLING ──
+  const BUFFER = window.innerHeight * 2.5;
+
+  function manageViewport() {
+    blocks.forEach(block => {
+      const rect   = block.sentinel.getBoundingClientRect();
+      // Sentinel is at the END of the block, so block content is above it
+      const blockBottom = rect.top;
+      const blockTop    = rect.top - estimateHeight(block);
+      const inView = blockBottom > -BUFFER && blockTop < window.innerHeight + BUFFER;
+      if (inView && !block.live) {
+        injectImgs(block);
+        collectImgs(block);
+      } else if (!inView && block.live) {
+        removeImgs(block);
+      }
+    });
+  }
+
+  let rafPending = false;
+  window.addEventListener('scroll', () => {
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(() => { rafPending = false; manageViewport(); });
+  }, { passive: true });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) manageViewport();
+  });
+
+  // Initial fill
+  addBlocks(30);
 
   // ── MUSIC — real MIDI hamster dance ──
   const MIDI_NOTES=[[0.0,830.61,0.0625],[0.125,783.99,0.125],[0.25,246.94,0.25],[0.25,830.61,0.25],[0.5,659.26,0.1875],[0.5,415.3,0.25],[0.5,329.63,0.25],[0.75,246.94,0.25],[0.75,659.26,0.25],[1.0,415.3,0.25],[1.0,329.63,0.25],[1.125,659.26,0.0625],[1.25,493.88,0.1875],[1.25,246.94,0.25],[1.5,493.88,0.125],[1.5,415.3,0.25],[1.5,329.63,0.25],[1.75,246.94,0.25],[2.0,830.61,0.125],[2.0,415.3,0.25],[2.0,329.63,0.25],[2.25,246.94,0.25],[2.5,493.88,0.125],[2.5,415.3,0.25],[2.5,329.63,0.25],[2.75,659.26,0.125],[2.75,246.94,0.25],[2.875,830.61,0.125],[3.0,415.3,0.25],[3.0,329.63,0.25],[3.125,987.77,0.375],[3.25,246.94,0.25],[3.5,440.0,0.25],[3.5,369.99,0.25],[3.75,246.94,0.25],[4.0,440.0,0.25],[4.0,369.99,0.25],[4.25,246.94,0.25],[4.5,1318.51,0.125],[4.5,415.3,0.25],[4.5,329.63,0.25],[4.625,1108.73,0.125],[4.75,987.77,0.125],[4.75,246.94,0.25],[4.875,1108.73,0.125],[5.0,987.77,0.125],[5.0,329.63,0.25],[5.0,415.3,0.25],[5.125,830.61,0.125],[5.25,987.77,0.125],[5.25,277.18,0.25],[5.375,659.26,0.125],[5.5,659.26,0.125],[5.5,440.0,0.25],[5.5,329.63,0.25],[5.625,659.26,0.125],[5.75,554.37,0.125],[5.75,277.18,0.25],[5.875,659.26,0.125],[6.0,739.99,0.125],[6.0,440.0,0.25],[6.0,329.63,0.25],[6.125,659.26,0.125],[6.25,830.61,0.125],[6.25,246.94,0.25],[6.375,987.77,0.125],[6.5,830.61,0.125],[6.5,329.63,0.25],[6.5,415.3,0.25],[6.625,987.77,0.125],[6.75,554.37,0.125],[6.75,246.94,0.25],[6.875,493.88,0.125],[7.0,554.37,0.25],[7.0,440.0,0.25],[7.0,311.13,0.25],[7.25,82.41,0.125],[7.25,659.26,1.75],[7.25,415.3,1.75],[7.25,329.63,1.75],[7.75,123.47,0.125],[7.75,82.41,0.125],[8.25,123.47,0.125],[8.25,82.41,0.125],[8.75,123.47,0.125],[8.75,82.41,0.125],[9.25,164.81,0.125],[9.25,82.41,0.125],[9.625,164.81,0.125],[9.625,82.41,0.125],[10.0,61.74,0.125],[10.0,123.47,0.125],[10.25,41.2,0.125],[10.25,82.41,0.125],[11.0,415.3,0.0625],[11.125,392.0,0.125],[11.25,41.2,0.125],[11.25,415.3,0.25],[11.5,123.47,0.125],[11.5,164.81,0.125],[11.5,329.63,0.1875],[11.625,82.41,0.125],[11.75,41.2,0.125],[11.75,329.63,0.25],[12.0,123.47,0.125],[12.0,164.81,0.125],[12.125,329.63,0.0625],[12.25,41.2,0.125],[12.25,246.94,0.1875],[12.5,123.47,0.125],[12.5,164.81,0.125],[12.5,246.94,0.125],[12.625,82.41,0.125],[12.75,41.2,0.125],[13.0,123.47,0.125],[13.0,164.81,0.125],[13.0,415.3,0.125],[13.25,41.2,0.125],[13.5,123.47,0.125],[13.5,164.81,0.125],[13.5,246.94,0.125],[13.625,82.41,0.125],[13.75,41.2,0.125],[13.75,329.63,0.125],[13.875,415.3,0.125],[14.0,123.47,0.125],[14.0,164.81,0.125],[14.125,493.88,0.375],[14.25,61.74,0.125],[14.5,246.94,0.125],[14.5,185.0,0.125],[14.625,123.47,0.125],[14.75,61.74,0.125],[15.0,246.94,0.125],[15.0,185.0,0.125],[15.25,69.3,0.125],[15.5,277.18,0.125],[15.5,207.65,0.125],[15.5,659.26,0.125],[15.625,138.59,0.125],[15.625,554.37,0.125],[15.75,69.3,0.125],[15.75,493.88,0.125],[15.875,554.37,0.125],[16.0,277.18,0.125],[16.0,207.65,0.125],[16.0,493.88,0.125],[16.125,415.3,0.125],[16.25,55.0,0.125],[16.25,493.88,0.125],[16.375,329.63,0.125],[16.5,220.0,0.125],[16.5,164.81,0.125],[16.5,329.63,0.125],[16.625,110.0,0.125],[16.625,329.63,0.125],[16.75,55.0,0.125],[16.75,277.18,0.125],[16.875,329.63,0.125],[17.0,164.81,0.125],[17.0,220.0,0.125],[17.0,369.99,0.125],[17.125,329.63,0.125],[17.25,61.74,0.125],[17.25,415.3,0.125],[17.375,493.88,0.125],[17.5,185.0,0.125],[17.5,246.94,0.125],[17.5,415.3,0.125],[17.625,123.47,0.125],[17.625,493.88,0.125],[17.75,61.74,0.125],[17.75,277.18,0.125],[17.875,246.94,0.125],[18.0,185.0,0.125],[18.0,246.94,0.125],[18.0,277.18,0.25],[18.25,41.2,0.375],[18.25,329.63,1.75],[18.5,164.81,0.125],[18.5,123.47,0.125],[18.625,82.41,0.125],[18.75,82.41,0.375],[18.75,41.2,0.375],[19.0,164.81,0.125],[19.0,123.47,0.125],[19.25,82.41,0.375],[19.25,41.2,0.375],[19.5,164.81,0.125],[19.5,123.47,0.125],[19.625,82.41,0.125],[19.75,41.2,0.375],[19.75,82.41,0.5],[20.0,164.81,0.125],[20.0,123.47,0.125],[20.25,82.41,0.125],[20.25,41.2,0.125],[20.25,415.3,0.25],[20.625,41.2,0.125],[20.625,82.41,0.125],[20.75,329.63,0.25],[21.0,41.2,0.125],[21.0,82.41,0.125],[21.25,82.41,0.125],[21.25,41.2,0.125],[21.25,246.94,0.25],[21.625,41.2,0.125],[21.625,82.41,0.125],[22.0,82.41,0.125],[22.0,41.2,0.125],[22.0,246.94,0.125],[22.125,246.94,0.125],[22.25,41.2,0.125],[22.25,82.41,0.125],[22.25,329.63,0.125],[22.5,246.94,0.125],[22.625,41.2,0.125],[22.625,82.41,0.125],[22.75,329.63,0.125],[23.0,82.41,0.125],[23.0,41.2,0.125],[23.0,415.3,0.125],[23.25,123.47,0.125],[23.25,61.74,0.125],[23.25,369.99,0.125],[23.625,123.47,0.125],[23.625,61.74,0.125],[23.625,369.99,0.125],[24.0,123.47,0.125],[24.0,61.74,0.125],[24.0,329.63,0.125],[24.125,369.99,0.125],[24.25,138.59,0.125],[24.25,69.3,0.125],[24.25,415.3,0.125],[24.5,329.63,0.125],[24.625,138.59,0.125],[24.625,69.3,0.125],[24.75,415.3,0.125],[25.0,138.59,0.125],[25.0,69.3,0.125],[25.0,493.88,0.125],[25.25,110.0,0.125],[25.25,55.0,0.125],[25.25,440.0,0.125],[25.625,110.0,0.125],[25.625,55.0,0.125],[25.625,440.0,0.125],[26.0,110.0,0.125],[26.0,55.0,0.125],[26.0,415.3,0.125],[26.125,369.99,0.125],[26.25,123.47,0.125],[26.25,61.74,0.125],[26.25,415.3,0.125],[26.375,415.3,0.125],[26.5,415.3,0.125],[26.625,123.47,0.125],[26.625,61.74,0.125],[26.75,369.99,0.125],[26.875,369.99,0.125],[27.0,123.47,0.125],[27.0,61.74,0.125],[27.0,369.99,0.125],[27.25,82.41,0.125],[27.25,41.2,0.125],[27.25,329.63,0.125],[27.5,41.2,0.125],[27.5,82.41,0.125],[27.625,329.63,0.125],[27.75,82.41,0.125],[27.75,41.2,0.125],[28.0,329.63,0.125],[28.0,41.2,0.125],[28.0,82.41,0.125],[28.125,369.99,0.125],[28.25,415.3,0.125],[28.25,82.41,0.125],[28.25,41.2,0.125],[28.5,415.3,0.125],[28.625,41.2,0.125],[28.625,82.41,0.125],[28.75,164.81,0.125],[28.75,123.47,0.125],[28.75,329.63,0.125],[29.0,41.2,0.125],[29.0,82.41,0.125],[29.0,329.63,0.125],[29.25,82.41,0.125],[29.25,41.2,0.125],[29.25,246.94,0.25],[29.625,41.2,0.125],[29.625,82.41,0.125],[29.625,246.94,0.125],[29.75,164.81,0.125],[29.75,123.47,0.125],[30.0,246.94,0.125],[30.0,82.41,0.125],[30.0,41.2,0.125],[30.125,246.94,0.125],[30.25,329.63,0.125],[30.25,41.2,0.125],[30.25,82.41,0.125],[30.5,246.94,0.125],[30.625,41.2,0.125],[30.625,82.41,0.125],[30.75,164.81,0.125],[30.75,123.47,0.125],[30.75,329.63,0.125],[31.0,415.3,0.125],[31.0,82.41,0.125],[31.0,41.2,0.125],[31.25,369.99,0.125],[31.25,123.47,0.125],[31.25,61.74,0.125],[31.625,369.99,0.125],[31.625,123.47,0.125],[31.625,61.74,0.125],[31.75,246.94,0.125],[31.75,185.0,0.125],[32.0,329.63,0.125],[32.0,123.47,0.125],[32.0,61.74,0.125],[32.125,369.99,0.125],[32.25,415.3,0.125],[32.25,138.59,0.125],[32.25,69.3,0.125],[32.375,415.3,0.125],[32.5,329.63,0.125],[32.625,138.59,0.125],[32.625,69.3,0.125],[32.75,277.18,0.125],[32.75,207.65,0.125],[32.75,415.3,0.125],[33.0,493.88,0.125],[33.0,138.59,0.125],[33.0,69.3,0.125],[33.25,440.0,0.125],[33.25,110.0,0.125],[33.25,55.0,0.125],[33.625,440.0,0.125],[33.625,110.0,0.125],[33.625,55.0,0.125],[33.75,164.81,0.125],[33.75,220.0,0.125],[34.0,415.3,0.125],[34.0,110.0,0.125],[34.0,55.0,0.125],[34.125,369.99,0.125],[34.25,415.3,0.125],[34.25,123.47,0.125],[34.25,61.74,0.125],[34.375,415.3,0.125],[34.5,415.3,0.125],[34.625,123.47,0.125],[34.625,61.74,0.125],[34.75,185.0,0.125],[34.75,246.94,0.125],[34.75,369.99,0.125],[34.875,369.99,0.125],[35.0,369.99,0.125],[35.0,123.47,0.125],[35.0,61.74,0.125],[35.25,82.41,0.125],[35.25,41.2,0.125],[35.25,329.63,0.5],[35.5,164.81,0.125],[35.5,123.47,0.125],[35.5,41.2,0.125],[35.5,82.41,0.125],[35.75,82.41,0.125],[35.75,41.2,0.125],[36.0,164.81,0.125],[36.0,123.47,0.125],[36.0,82.41,0.125],[36.0,41.2,0.125],[36.25,82.41,0.125],[36.25,41.2,0.125],[36.25,830.61,0.25],[36.25,987.77,0.25],[36.25,415.3,0.25],[36.25,493.88,0.25],[36.5,123.47,0.0625],[36.5,82.41,0.0625],[36.625,82.41,0.125],[36.625,41.2,0.125],[36.75,164.81,0.125],[36.75,123.47,0.125],[36.75,830.61,0.25],[36.75,659.26,0.25],[36.75,415.3,0.25],[36.75,329.63,0.25],[37.0,123.47,0.0625],[37.0,82.41,0.125],[37.0,41.2,0.125],[37.25,41.2,0.125],[37.25,82.41,0.125],[37.25,659.26,0.25],[37.25,493.88,0.25],[37.25,329.63,0.25],[37.25,246.94,0.25],[37.5,123.47,0.0625],[37.5,82.41,0.0625],[37.625,82.41,0.125],[37.625,41.2,0.125],[37.75,164.81,0.125],[37.75,123.47,0.125],[38.0,123.47,0.0625],[38.0,82.41,0.125],[38.0,41.2,0.125],[38.0,659.26,0.125],[38.0,493.88,0.125],[38.0,329.63,0.125],[38.0,246.94,0.125],[38.125,493.88,0.125],[38.125,659.26,0.125],[38.125,246.94,0.125],[38.125,329.63,0.125],[38.25,82.41,0.125],[38.25,41.2,0.125],[38.25,830.61,0.125],[38.25,659.26,0.125],[38.25,415.3,0.125],[38.25,329.63,0.125],[38.5,123.47,0.0625],[38.5,82.41,0.0625],[38.5,659.26,0.125],[38.5,493.88,0.125],[38.5,329.63,0.125],[38.5,246.94,0.125],[38.625,82.41,0.125],[38.625,41.2,0.125],[38.75,164.81,0.125],[38.75,123.47,0.125],[38.75,659.26,0.125],[38.75,830.61,0.125],[38.75,329.63,0.125],[38.75,415.3,0.125],[39.0,123.47,0.0625],[39.0,82.41,0.125],[39.0,41.2,0.125],[39.0,830.61,0.125],[39.0,987.77,0.125],[39.0,415.3,0.125],[39.0,493.88,0.125],[39.25,123.47,0.125],[39.25,61.74,0.125],[39.25,987.77,0.25],[39.25,739.99,0.25],[39.25,493.88,0.25],[39.25,369.99,0.25],[39.5,185.0,0.0625],[39.5,123.47,0.0625],[39.625,123.47,0.125],[39.625,61.74,0.125],[39.625,739.99,0.125],[39.625,987.77,0.125],[39.625,369.99,0.125],[39.625,493.88,0.125],[39.75,246.94,0.125],[39.75,185.0,0.125],[40.0,185.0,0.0625],[40.0,123.47,0.125],[40.0,61.74,0.125],[40.0,830.61,0.125],[40.0,659.26,0.125],[40.0,415.3,0.125],[40.0,329.63,0.125],[40.125,880.0,0.125],[40.125,739.99,0.125],[40.125,440.0,0.125],[40.125,369.99,0.125],[40.25,138.59,0.125],[40.25,69.3,0.125],[40.25,987.77,0.125],[40.25,830.61,0.125],[40.25,493.88,0.125],[40.25,415.3,0.125],[40.5,207.65,0.0625],[40.5,138.59,0.0625],[40.5,830.61,0.125],[40.5,659.26,0.125],[40.5,415.3,0.125],[40.5,329.63,0.125],[40.625,138.59,0.125],[40.625,69.3,0.125],[40.75,207.65,0.125],[40.75,277.18,0.125],[40.75,987.77,0.125],[40.75,830.61,0.125],[40.75,493.88,0.125],[40.75,415.3,0.125],[41.0,207.65,0.0625],[41.0,138.59,0.125],[41.0,69.3,0.125],[41.0,659.26,0.125],[41.0,1318.51,0.125],[41.0,987.77,0.125],[41.0,493.88,0.125],[41.25,110.0,0.125],[41.25,55.0,0.125],[41.25,554.37,0.25],[41.25,1108.73,0.25],[41.25,880.0,0.25],[41.25,440.0,0.25],[41.5,164.81,0.0625],[41.5,110.0,0.0625],[41.625,110.0,0.125],[41.625,55.0,0.125],[41.625,554.37,0.125],[41.625,1108.73,0.125],[41.625,880.0,0.125],[41.625,440.0,0.125],[41.75,164.81,0.125],[41.75,220.0,0.125],[42.0,164.81,0.0625],[42.0,110.0,0.125],[42.0,55.0,0.125],[42.0,830.61,0.125],[42.0,987.77,0.125],[42.0,415.3,0.125],[42.0,493.88,0.125],[42.125,739.99,0.125],[42.125,880.0,0.125],[42.125,369.99,0.125],[42.125,440.0,0.125],[42.25,123.47,0.125],[42.25,61.74,0.125],[42.25,830.61,0.125],[42.25,987.77,0.125],[42.25,415.3,0.125],[42.25,493.88,0.125],[42.375,830.61,0.125],[42.375,987.77,0.125],[42.375,415.3,0.125],[42.375,493.88,0.125],[42.5,185.0,0.0625],[42.5,123.47,0.0625],[42.5,830.61,0.125],[42.5,987.77,0.125],[42.5,415.3,0.125],[42.5,493.88,0.125],[42.625,123.47,0.125],[42.625,61.74,0.125],[42.75,185.0,0.125],[42.75,246.94,0.125],[42.75,880.0,0.125],[42.75,739.99,0.125],[42.75,440.0,0.125],[42.75,369.99,0.125],[42.875,880.0,0.125],[42.875,739.99,0.125],[42.875,440.0,0.125],[42.875,369.99,0.125],[43.0,185.0,0.0625],[43.0,123.47,0.125],[43.0,61.74,0.125],[43.0,880.0,0.125],[43.0,739.99,0.125],[43.0,440.0,0.125],[43.0,369.99,0.125],[43.25,82.41,0.125],[43.25,41.2,0.125],[43.25,830.61,0.25],[43.25,659.26,0.25],[43.25,415.3,0.25],[43.25,329.63,0.25],[43.5,164.81,0.125],[43.5,123.47,0.125],[43.5,41.2,0.125],[43.5,82.41,0.125],[43.625,659.26,0.125],[43.625,830.61,0.125],[43.625,329.63,0.125],[43.625,415.3,0.125],[43.75,82.41,0.125],[43.75,41.2,0.125],[44.0,164.81,0.125],[44.0,123.47,0.125],[44.0,82.41,0.125],[44.0,41.2,0.125],[44.0,830.61,0.125],[44.0,659.26,0.125],[44.0,415.3,0.125],[44.0,329.63,0.125],[44.125,880.0,0.125],[44.125,739.99,0.125],[44.125,440.0,0.125],[44.125,369.99,0.125],[44.25,41.2,0.125],[44.25,82.41,0.125],[44.25,987.77,0.125],[44.25,830.61,0.125],[44.25,493.88,0.125],[44.25,415.3,0.125],[44.5,123.47,0.0625],[44.5,82.41,0.0625],[44.5,987.77,0.125],[44.5,830.61,0.125],[44.5,493.88,0.125],[44.5,415.3,0.125],[44.625,82.41,0.125],[44.625,41.2,0.125],[44.75,123.47,0.125],[44.75,164.81,0.125],[44.75,659.26,0.125],[44.75,830.61,0.125],[44.75,329.63,0.125],[44.75,415.3,0.125],[45.0,123.47,0.0625],[45.0,82.41,0.125],[45.0,41.2,0.125],[45.0,659.26,0.125],[45.0,830.61,0.125],[45.0,329.63,0.125],[45.0,415.3,0.125],[45.25,82.41,0.125],[45.25,41.2,0.125],[45.25,987.77,0.25],[45.25,493.88,0.25],[45.25,659.26,0.25],[45.25,246.94,0.25],[45.25,329.63,0.25],[45.5,123.47,0.0625],[45.5,82.41,0.0625],[45.625,82.41,0.125],[45.625,41.2,0.125],[45.625,987.77,0.125],[45.625,659.26,0.125],[45.625,493.88,0.125],[45.625,329.63,0.125],[45.625,246.94,0.125],[45.75,123.47,0.125],[45.75,164.81,0.125],[46.0,123.47,0.0625],[46.0,82.41,0.125],[46.0,41.2,0.125],[46.0,987.77,0.125],[46.0,659.26,0.125],[46.0,493.88,0.125],[46.0,329.63,0.125],[46.0,246.94,0.125],[46.125,987.77,0.125],[46.125,659.26,0.125],[46.125,493.88,0.125],[46.125,329.63,0.125],[46.125,246.94,0.125],[46.25,82.41,0.125],[46.25,41.2,0.125],[46.25,830.61,0.125],[46.25,659.26,0.125],[46.25,415.3,0.125],[46.25,329.63,0.125],[46.375,659.26,0.125],[46.375,830.61,0.125],[46.375,329.63,0.125],[46.375,415.3,0.125],[46.5,123.47,0.0625],[46.5,82.41,0.0625],[46.5,987.77,0.125],[46.5,659.26,0.125],[46.5,493.88,0.125],[46.5,329.63,0.125],[46.5,246.94,0.125],[46.625,82.41,0.125],[46.625,41.2,0.125],[46.75,123.47,0.125],[46.75,164.81,0.125],[46.75,830.61,0.125],[46.75,659.26,0.125],[46.75,415.3,0.125],[46.75,329.63,0.125],[47.0,123.47,0.0625],[47.0,82.41,0.125],[47.0,41.2,0.125],[47.0,830.61,0.125],[47.0,987.77,0.125],[47.0,415.3,0.125],[47.0,493.88,0.125],[47.25,123.47,0.125],[47.25,61.74,0.125],[47.25,739.99,0.25],[47.25,987.77,0.25],[47.25,369.99,0.25],[47.25,493.88,0.25],[47.5,164.81,0.0625],[47.5,123.47,0.0625],[47.625,123.47,0.125],[47.625,61.74,0.125],[47.625,739.99,0.125],[47.625,987.77,0.125],[47.625,369.99,0.125],[47.625,493.88,0.125],[47.75,164.81,0.125],[47.75,246.94,0.125],[48.0,164.81,0.0625],[48.0,123.47,0.125],[48.0,61.74,0.125],[48.0,659.26,0.125],[48.0,830.61,0.125],[48.0,329.63,0.125],[48.0,415.3,0.125],[48.125,739.99,0.125],[48.125,880.0,0.125],[48.125,369.99,0.125],[48.125,440.0,0.125],[48.25,138.59,0.125],[48.25,69.3,0.125],[48.25,830.61,0.125],[48.25,987.77,0.125],[48.25,415.3,0.125],[48.25,493.88,0.125],[48.375,830.61,0.125],[48.375,987.77,0.125],[48.375,415.3,0.125],[48.375,493.88,0.125],[48.5,207.65,0.0625],[48.5,138.59,0.0625],[48.5,659.26,0.125],[48.5,830.61,0.125],[48.5,329.63,0.125],[48.5,415.3,0.125],[48.625,138.59,0.125],[48.625,69.3,0.125],[48.75,207.65,0.125],[48.75,277.18,0.125],[48.75,830.61,0.125],[48.75,987.77,0.125],[48.75,415.3,0.125],[48.75,493.88,0.125],[49.0,207.65,0.0625],[49.0,138.59,0.125],[49.0,69.3,0.125],[49.0,659.26,0.125],[49.0,987.77,0.125],[49.0,493.88,0.125],[49.25,110.0,0.125],[49.25,55.0,0.125],[49.25,554.37,0.25],[49.25,880.0,0.25],[49.25,1108.73,0.25],[49.25,440.0,0.25],[49.5,164.81,0.0625],[49.5,110.0,0.0625],[49.625,110.0,0.125],[49.625,55.0,0.125],[49.625,554.37,0.125],[49.625,880.0,0.125],[49.625,1108.73,0.125],[49.625,440.0,0.125],[49.75,164.81,0.125],[49.75,220.0,0.125],[50.0,164.81,0.0625],[50.0,110.0,0.125],[50.0,55.0,0.125],[50.0,830.61,0.125],[50.0,987.77,0.125],[50.0,415.3,0.125],[50.0,493.88,0.125],[50.125,739.99,0.125],[50.125,880.0,0.125],[50.125,369.99,0.125],[50.125,440.0,0.125],[50.25,123.47,0.125],[50.25,61.74,0.125],[50.25,830.61,0.125],[50.25,987.77,0.125],[50.25,415.3,0.125],[50.25,493.88,0.125],[50.375,830.61,0.125],[50.375,987.77,0.125],[50.375,415.3,0.125],[50.375,493.88,0.125],[50.5,185.0,0.0625],[50.5,123.47,0.0625],[50.5,830.61,0.125],[50.5,987.77,0.125],[50.5,415.3,0.125],[50.5,493.88,0.125],[50.625,123.47,0.125],[50.625,61.74,0.125],[50.75,185.0,0.125],[50.75,246.94,0.125],[50.75,739.99,0.125],[50.75,880.0,0.125],[50.75,369.99,0.125],[50.75,440.0,0.125],[50.875,739.99,0.125],[50.875,880.0,0.125],[50.875,369.99,0.125],[50.875,440.0,0.125],[51.0,185.0,0.0625],[51.0,123.47,0.125],[51.0,61.74,0.125],[51.0,739.99,0.125],[51.0,880.0,0.125],[51.0,369.99,0.125],[51.0,440.0,0.125],[51.25,82.41,0.125],[51.25,41.2,0.125],[51.25,659.26,0.125],[51.25,830.61,0.125],[51.25,329.63,0.125],[51.25,415.3,0.125],[51.625,1318.51,0.1875],[51.625,830.61,0.3125],[51.625,329.63,0.3125],[51.625,164.81,0.375],[51.625,659.26,0.375],[51.625,123.47,0.4375],[51.625,415.3,0.4375],[51.625,82.41,0.5],[51.625,41.2,0.625]];
@@ -608,8 +792,26 @@ const MIDI_DUR=52.25;
   // ── Preload: create AudioContext early (suspended) so it's ready instantly ──
   // Browsers require a user gesture to resume — we do that on first interaction.
   // This eliminates the tiny initialisation delay when music starts.
+  let compressor = null; // DynamicsCompressorNode — prevents clipping/crackling
+
+  function createAudioCtx() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Compressor sits between all oscillators and the destination.
+    // Prevents multiple simultaneous notes from clipping the output.
+    // To revert: remove this block and change gain.connect(compressor)
+    // back to gain.connect(ctx.destination)
+    compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.value = -18;  // start compressing at -18dB
+    compressor.knee.value       = 6;   // soft knee for natural sound
+    compressor.ratio.value      = 4;   // 4:1 compression ratio
+    compressor.attack.value     = 0.003; // 3ms attack
+    compressor.release.value    = 0.15;  // 150ms release
+    compressor.connect(ctx.destination);
+    return ctx;
+  }
+
   try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx = createAudioCtx();
     // Keep it suspended until the user interacts — no sound yet
   } catch(e) {}
 
@@ -629,7 +831,7 @@ const MIDI_DUR=52.25;
       const osc  = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(compressor); // → compressor → destination
       osc.type = 'triangle';
       osc.frequency.value = freq;
       gain.gain.setValueAtTime(0, st);
@@ -649,7 +851,7 @@ const MIDI_DUR=52.25;
     document.getElementById('music-btn').textContent = '■ Stop';
     // Resume the preloaded context (or create fresh if it was never made)
     if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx = createAudioCtx();
     }
     audioCtx.resume().then(() => scheduleNotes());
   }
@@ -713,39 +915,37 @@ const MIDI_DUR=52.25;
   const star = document.querySelector('header h1 em');
 
   function randomiseGhosts() {
-    const ghosts = document.querySelectorAll('.ghost-img');
-    const sp = speedMult;
-    ghosts.forEach(img => {
-      const animType = animTypes[Math.floor(Math.random() * animTypes.length)];
-      const colour   = colours[Math.floor(Math.random() * colours.length)];
-      const dur      = { bounce:0.48, stretch:1.2, turn:1.6, shrink:0.9, wave:1.0,
-                         wobble:0.8, float:1.4, squash:1.1, shake:0.5, nod:0.9,
-                         heartbeat:0.8, melt:1.4 }[animType];
-      const sdur     = dur / sp;
-      const soff     = -(Math.random() * sdur); // random phase offset
-      img.style.filter = colour;
-      switch(animType) {
-        case 'bounce':    img.style.animation = `b1 ${sdur}s ease-in-out ${soff}s infinite alternate`; break;
-        case 'stretch':   img.style.animation = `stretch ${sdur}s ease-in-out ${soff}s infinite`; break;
-        case 'turn':      img.style.animation = `turn ${sdur}s ease-in-out ${soff}s infinite`; break;
-        case 'shrink':    img.style.animation = `shrink ${sdur}s ease-in-out ${soff}s infinite`; break;
-        case 'wave':      img.style.animation = `wave ${sdur}s ease-in-out ${soff}s infinite`; break;
-        case 'wobble':    img.style.animation = `wobble ${sdur}s ease-in-out ${soff}s infinite`; break;
-        case 'float':     img.style.animation = `float ${sdur}s ease-in-out ${soff}s infinite alternate`; break;
-        case 'squash':    img.style.animation = `squash ${sdur}s ease-in-out ${soff}s infinite`; break;
-        case 'shake':     img.style.animation = `shake ${sdur}s ease-in-out ${soff}s infinite`; break;
-        case 'nod':       img.style.animation = `nod ${sdur}s ease-in-out ${soff}s infinite`; break;
-        case 'heartbeat': img.style.animation = `heartbeat ${sdur}s ease-in-out ${soff}s infinite`; break;
-        case 'melt':      img.style.animation = `melt ${sdur}s ease-in-out ${soff}s infinite`; break;
+    blocks.forEach(block => {
+      block.ghosts.forEach(g => {
+        g.animType    = animTypes[Math.floor(Math.random()*animTypes.length)];
+        g.colour      = colours[Math.floor(Math.random()*colours.length)];
+        g.dur         = DURS[g.animType];
+        g.frameOffset = -(Math.random() * g.dur);
+      });
+      if (block.live) {
+        block.imgs.forEach((img, i) => {
+          const g = block.ghosts[i];
+          if (!g) return;
+          img.style.filter    = g.colour;
+          img.style.animation = makeAnim(g.animType, g.dur, g.frameOffset);
+          img.dataset.baseDur = img.style.animationDuration;
+        });
       }
     });
   }
 
   function restoreRows() {
-    while (stage.firstChild) stage.removeChild(stage.firstChild);
-    rowIdx = 0;
-    for (let r = 0; r < 30; r++) addGhostBlock();
-    if (speedMult !== 1.0) applySpeed(speedMult);
+    blocks.forEach(b => {
+      removeImgs(b);
+      b.sentinel.remove();
+      if (b.placeholder.parentNode) b.placeholder.remove();
+    });
+    blocks.length = 0;
+    dataRowIdx = 0;
+    ghostTotal = 0;
+    const el = document.getElementById('count-num');
+    if (el) el.textContent = '0';
+    addBlocks(30);
   }
 
   star.addEventListener('click', (e) => {
@@ -763,21 +963,22 @@ const MIDI_DUR=52.25;
   // ── SPEED CONTROL ──
   // Store base durations on each ghost as data attributes
   // Speed always applied from base, never compounded
+  let speedDebounce = null;
   function applySpeed(mult) {
     speedMult = mult;
-    document.querySelectorAll('.ghost-img').forEach(img => {
-      // Store original durations on first apply
-      if (!img.dataset.baseDurations) {
-        img.dataset.baseDurations = img.style.animationDuration;
-      }
-      const bases = img.dataset.baseDur.split(',');
-      img.style.animationDuration = bases.map(d => {
-        const val = parseFloat(d);
-        return isNaN(val) ? d : (val / mult) + 's';
-      }).join(',');
+    blocks.forEach(block => {
+      if (!block.live) return;
+      block.imgs.forEach((img, i) => {
+        const g = block.ghosts[i];
+        if (!g) return;
+        img.style.animation = makeAnim(g.animType, g.dur, g.frameOffset);
+        img.dataset.baseDur = img.style.animationDuration;
+      });
     });
-    // Restart music at new speed
-    if (playing) { stopMusic(); startMusic(); }
+    clearTimeout(speedDebounce);
+    speedDebounce = setTimeout(() => {
+      if (playing) { stopMusic(); startMusic(); }
+    }, 200);
   }
 
   document.querySelectorAll('.speed-btn').forEach(btn => {
@@ -785,6 +986,57 @@ const MIDI_DUR=52.25;
       document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       applySpeed(parseFloat(btn.dataset.speed));
+    });
+  });
+
+  // ── DISCO BALL ──
+  const discoWrap  = document.getElementById('disco-wrap');
+  const discoSpots = document.getElementById('disco-spots');
+
+  // Build floor spots — coloured blobs scattered around
+  const spotData = [
+    {x:'15%', y:'30%', w:60,  c:'#ff4dbd', d:'0s',    dur:'1.8s'},
+    {x:'80%', y:'25%', w:45,  c:'#4dffff', d:'0.3s',  dur:'2.1s'},
+    {x:'45%', y:'65%', w:55,  c:'#ffff4d', d:'0.6s',  dur:'1.6s'},
+    {x:'70%', y:'70%', w:40,  c:'#c44dff', d:'0.9s',  dur:'2.3s'},
+    {x:'10%', y:'60%', w:50,  c:'#4dff91', d:'1.2s',  dur:'1.9s'},
+    {x:'88%', y:'50%', w:35,  c:'#ff4d4d', d:'0.15s', dur:'2.0s'},
+    {x:'30%', y:'80%', w:65,  c:'#4da6ff', d:'0.7s',  dur:'1.7s'},
+    {x:'60%', y:'40%', w:42,  c:'#ff944d', d:'1.0s',  dur:'2.2s'},
+    {x:'25%', y:'45%', w:38,  c:'#ff4dbd', d:'0.4s',  dur:'1.5s'},
+    {x:'75%', y:'85%', w:52,  c:'#4dffff', d:'0.8s',  dur:'1.8s'},
+    {x:'50%', y:'20%', w:44,  c:'#c44dff', d:'1.3s',  dur:'2.0s'},
+    {x:'5%',  y:'75%', w:48,  c:'#ffff4d', d:'0.2s',  dur:'1.9s'},
+    {x:'92%', y:'75%', w:36,  c:'#4dff91', d:'1.1s',  dur:'2.1s'},
+    {x:'40%', y:'50%', w:58,  c:'#ff4d4d', d:'0.5s',  dur:'1.6s'},
+  ];
+  spotData.forEach(s => {
+    const sp = document.createElement('div');
+    sp.className = 'disco-spot';
+    sp.style.cssText = `left:${s.x};top:${s.y};width:${s.w}px;height:${s.w}px;background:${s.c};animation-delay:${s.d};animation-duration:${s.dur};`;
+    discoSpots.appendChild(sp);
+  });
+
+  let discoDown = false;
+
+  function dropDiscoBall() {
+    discoDown = true;
+    discoWrap.classList.add('dropped');
+    document.body.classList.add('disco-active');
+    discoSpots.querySelectorAll('.disco-spot').forEach(s => s.style.opacity = '');
+  }
+
+  function liftDiscoBall() {
+    discoDown = false;
+    discoWrap.classList.remove('dropped');
+    document.body.classList.remove('disco-active');
+    // Force spots invisible immediately — animation won't leave any stuck
+    discoSpots.querySelectorAll('.disco-spot').forEach(s => s.style.opacity = '0');
+  }
+
+  star.addEventListener('click', (e) => {
+    requestAnimationFrame(() => {
+      if (chaosMode) dropDiscoBall(); else liftDiscoBall();
     });
   });
 </script>
